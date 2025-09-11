@@ -137,7 +137,7 @@ export async function inventoryIMSCC(
             if (assignmentHtmlPath) resourceAnalysisHref = assignmentHtmlPath;
         } else if (isQuizOrSurvey) {
             // const resourceIdentifierRef = manifestResourceElement.querySelector('dependency')!.getAttribute("identifierref")!;
-            const resourceIdentifierRef = manifestResourceElement.getElementsByTagName('dependency').length > 0 ? manifestResourceElement.getElementsByTagName('dependency')[0].getAttribute("identifierref")! : null;
+            resourceIdentifierRef = manifestResourceElement.getElementsByTagName('dependency').length > 0 ? manifestResourceElement.getElementsByTagName('dependency')[0].getAttribute("identifierref")! : null;
             const matchingManifestResourceElement = findManifestResourceElementByIentifier(resourceIdentifierRef);
 
             if (matchingManifestResourceElement && fileContents[matchingManifestResourceElement.getAttribute('href')!]) {
@@ -175,7 +175,7 @@ export async function inventoryIMSCC(
                 resourceTitle = discussionDoc.getElementsByTagName('title').length > 0 ? discussionDoc.getElementsByTagName('title')[0].textContent || resourceTitle : resourceTitle;
 
                 // const resourceIdentifierRef = manifestResourceElement.querySelector('dependency')!.getAttribute("identifierref")!;
-                const resourceIdentifierRef = manifestResourceElement.getElementsByTagName('dependency').length > 0 ? manifestResourceElement.getElementsByTagName('dependency')[0].getAttribute("identifierref")! : null;
+                resourceIdentifierRef = manifestResourceElement.getElementsByTagName('dependency').length > 0 ? manifestResourceElement.getElementsByTagName('dependency')[0].getAttribute("identifierref")! : null;
                 const matchingManifestResourceElement = findManifestResourceElementByIentifier(resourceIdentifierRef);
 
                 if (matchingManifestResourceElement && fileContents[matchingManifestResourceElement.getAttribute('href')!]) {
@@ -269,13 +269,13 @@ export async function inventoryIMSCC(
             inModuleResourceIdentifiers.add(moduleItemIdentifier);
         });
 
-        const module = {
+        const moduleObj = {
             title: moduleTitle,
             items: moduleItems,
             status: moduleStatus
         };
 
-        allModules.push(module);
+        allModules.push(moduleObj);
     });
 
     return {modulesResults: allModules, resourcesResults: allResources};
@@ -300,7 +300,7 @@ export async function analyzeIMSCCForObjects(parser: PlatformDOMParser, fileCont
     Promise<{videosResults: VideoObject[], filesResults: FileObject[], linksResults: LinkObject[]}> {
     if (parser === null) throw Error('analyzeIMSCCContent: parser is null.');
 
-    let allLinks: LinkObject[] = [], allFiles: FileObject[] = [], allVideos: VideoObject[] = [];
+    const allLinks: LinkObject[] = [], allFiles: FileObject[] = [], allVideos: VideoObject[] = [];
 
     for (const item of items) {
         if (!item.analysisHref) continue
@@ -484,8 +484,8 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
         const title = video.title || '(Title Not Found)';
         const source = video.querySelector('source');
         const src = source?.src || '';
-        let platform = 'Instructure';
-        let type = 'embed'
+        const platform: string = 'Instructure';
+        const type = 'embed'
         // if (classes.includes('instructure_inline_media_comment')) platform = 'Instructure';
 
         if (platform != 'Unknown') {
@@ -506,7 +506,7 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
         const src = (iframe.src || '').toLowerCase();
         const title = iframe.title || '(Title Not Found)';
         let platform = 'Unknown';
-        let type = 'embed'
+        const type = 'embed'
         if (src.includes('www.youtube.com/embed/')) platform = 'YouTube';
         else if (src.includes('player.vimeo.com')) platform = 'Vimeo';
         else if (src.includes('https://mediasite.osu.edu/mediasite/lti/home/coverplay') || src.includes('mediasite.osu.edu/mediasite/play')) platform = 'Mediasite';
@@ -531,7 +531,7 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
         const src = (a.href || '').toLowerCase();
         const title = a.text || '(Title Not Found)';
         let platform = 'Unknown';
-        let type = 'link'
+        const type = 'link'
         if (src.includes('www.youtube.com/watch') || src.includes('youtu.be')) platform = 'YouTube';
         else if (src.includes('vimeo.com')) platform = 'Vimeo';
         else if (src.includes('mediasite.osu.edu/mediasite/play')) platform = 'Mediasite';

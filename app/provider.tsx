@@ -13,7 +13,7 @@ declare module '@adobe/react-spectrum' {
 }
 
 export function ClientProviders({ children } : { children: React.ReactNode }) {
-  let router = useRouter();
+  const router = useRouter();
 
   return (
     <Provider colorScheme="light" theme={defaultTheme} router={{ navigate: router.push }}>

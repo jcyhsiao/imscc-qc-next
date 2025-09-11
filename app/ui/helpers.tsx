@@ -21,7 +21,7 @@ export const QC_BADGES = {
 
 export function getIconForItemType(type: string): JSX.Element {
     const sharedProps = {};
-    let ariaLabel = getReadableType(type);
+    const ariaLabel = getReadableType(type);
     let icon: JSX.Element | null = null;
 
     switch (type) {
