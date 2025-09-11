@@ -3,7 +3,7 @@ import { Module } from '@/app/lib/definitions';
       /**
          * Render the course structure accordion.
          * Implementation mirrors original behavior.
-         */
+        
         export function displayModules(modules: Module[]) {
             const container = document.getElementById('course-structure')!;
             container.innerHTML = '';
@@ -96,3 +96,4 @@ import { Module } from '@/app/lib/definitions';
                 });
             });
         }
+             */
