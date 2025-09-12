@@ -18,10 +18,12 @@ export interface ModuleItem {
 */
 
 export function ModulesDisplay({ modules }: { modules: Module[] }) {
+    const uniqueID = () => useId();
+
     return (
         <Accordion width='95vw'>
             {modules.map(module =>
-                <Disclosure id={module.title} key={useId()}>
+                <Disclosure id={module.title} key={uniqueID()}>
                     <DisclosureTitle>
                         <Grid width='100vw' columns={['11fr', '1fr']}>
                             {module.title}
