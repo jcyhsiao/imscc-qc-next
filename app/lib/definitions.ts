@@ -14,6 +14,7 @@ export interface Resource {
 };
 
 export interface Module {
+    identifier: string,
     title: string,
     items: ModuleItem[],
     published: boolean,

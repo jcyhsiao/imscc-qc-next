@@ -44,7 +44,7 @@ export async function extractIMSCC(
   * Preserves original behavior and logic.
 */
 export async function inventoryIMSCC(
-    parser: PlatformDOMParser, 
+    parser: PlatformDOMParser,
     fileContents: { [key: string]: string }): Promise<{modulesResults: Module[], resourcesResults: Resource[]}> {
     if (parser === null) throw Error('inventoryIMSCC: parser is null.');
 
@@ -230,6 +230,7 @@ export async function inventoryIMSCC(
         const moduleTitle = metaModuleElement.getElementsByTagName('title').length > 0 ? metaModuleElement.getElementsByTagName('title')[0].textContent! : 'ERROR: untitled module';
         // const moduleStatus = metaModuleElement.querySelector('workflow_state')?.textContent === 'active' ? 'active' : 'unpublished';
         const moduleStatus = metaModuleElement.getElementsByTagName('workflow_state').length > 0 && metaModuleElement.getElementsByTagName('workflow_state')[0].textContent === 'active' ? true : false;
+        const moduleIdentifier = metaModuleElement.getAttribute('identifier')!;
 
         const metaModuleItemElements = Array.from(metaModuleElement.getElementsByTagName('item'));
         metaModuleItemElements.forEach(metaModuleItemElement => {
@@ -270,6 +271,7 @@ export async function inventoryIMSCC(
         });
 
         const moduleObj = {
+            identifier: moduleIdentifier,
             title: moduleTitle,
             items: moduleItems,
             published: moduleStatus
@@ -284,10 +286,10 @@ export async function inventoryIMSCC(
     /*
     displayModules(allModules);
           displayCourseContent(allResources);
-  
+
           updateProgress(95, 'Analyzing course content...');
           await analyzeContent(fileContents, allResources);
-  
+
           updateProgress(100, 'Analysis complete!');
           */
 }
@@ -413,7 +415,7 @@ export async function analyzeIMSCCRichContentForAccessibility(parser: PlatformDO
 }
 
 /* =========================================================================
-           Helpers             
+           Helpers
     ========================================================================= */
 
 /**
