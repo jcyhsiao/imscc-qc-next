@@ -1,14 +1,14 @@
 import { Heading, ProgressCircle, Text, Item, TabList, TabPanels, Tabs } from '@adobe/react-spectrum';
 import { useEffect, useState } from 'react';
 import Alert from '@spectrum-icons/workflow/Alert';
-import { Suspense } from 'react';
 
 import { extractIMSCC, inventoryIMSCC, analyzeIMSCCForObjects, analyzeIMSCCRichContentForAccessibility } from '@/app/lib/file-handling';
-import { Resource, Module, ModuleItem } from '@/app/lib/definitions';
+import { Resource, Module } from '@/app/lib/definitions';
 import { VideoObject, FileObject, LinkObject } from '@/app/lib/definitions';
-import { EnhancedAxeResult, EnhancedAxeResults } from '@/app/lib/definitions';
+import { EnhancedAxeResults } from '@/app/lib/definitions';
 
-import { ModuleItemDisplay } from '@/app/ui/course_structure/module-display';
+import CourseStructure from '@/app/(results)/course-structure';
+import CourseResources from '@/app/(results)/course-resources';
 
 type Props = {
     selectedFile?: File | null;
@@ -28,7 +28,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
     const [allFiles, setAllFiles] = useState<FileObject[]>([]);
     const [allLinks, setAllLinks] = useState<LinkObject[]>([]);
     const [allAccessibilityResults, setAllAccessibilityResults] = useState<EnhancedAxeResults | null>(null);
-    
+
     // Use useEffect to trigger the analysis when startAnalysis or selectedFile changes
     useEffect(() => {
         const performAnalysis = async () => {
@@ -46,11 +46,11 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
 
                 const fileContentsResults = await extractIMSCC(selectedFile);
                 setAllFileContents(fileContentsResults);
-                const {modulesResults, resourcesResults} = await inventoryIMSCC(domParser, fileContentsResults);
+                const { modulesResults, resourcesResults } = await inventoryIMSCC(domParser, fileContentsResults);
                 setAllModules(modulesResults);
                 setAllResources(resourcesResults);
-                
-                const {videosResults, filesResults, linksResults} = await analyzeIMSCCForObjects(domParser, fileContentsResults, resourcesResults);
+
+                const { videosResults, filesResults, linksResults } = await analyzeIMSCCForObjects(domParser, fileContentsResults, resourcesResults);
                 setAllVideos(videosResults);
                 setAllFiles(filesResults);
                 setAllLinks(linksResults);
@@ -90,8 +90,43 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
             }
             {
                 isAnalysisComplete && !isAnalysisErrored
-                    ? <ModuleItemDisplay item={allModules[0].items[0]} />
-                    : <></> 
+                    ? (
+                        <Tabs aria-label="Results Tabs">
+                            <TabList>
+                                <Item key="struct">Structure</Item>
+                                <Item key="rsc">Resources</Item>
+                                <Item key="ally">Accessibility</Item>
+                                <Item key="links">Links</Item>
+                                <Item key="files">File Attachments</Item>
+                                <Item key="videos">Videos</Item>
+                                <Item key="exports">Export</Item>
+                            </TabList>
+                            <TabPanels>
+                                <Item key="struct">
+                                    <CourseStructure modules={allModules} />
+                                </Item>
+                                <Item key="rsc">
+                                    <CourseResources resources={allResources} / >
+                                </Item>
+                                <Item key="ally">
+                                    Alea jacta est.
+                                </Item>
+                                <Item key="links">
+                                    Alea jacta est.
+                                </Item>
+                                <Item key="files">
+                                    Alea jacta est.
+                                </Item>
+                                <Item key="videos">
+                                    Alea jacta est.
+                                </Item>
+                                <Item key="exports">
+                                    Alea jacta est.
+                                </Item>
+                            </TabPanels>
+                        </Tabs>
+                    )
+                    : <></>
             }
 
         </>

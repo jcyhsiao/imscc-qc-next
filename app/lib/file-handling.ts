@@ -93,7 +93,7 @@ export async function inventoryIMSCC(
             resourceHref?.includes('canvas_export.txt')
         ) continue;
 
-        let resourceStatus = 'unknown';
+        let resourceStatus = false;
         let resourceTitle = 'untitled';
 
         let resourceAnalysisHref: string | null = null;
@@ -120,7 +120,7 @@ export async function inventoryIMSCC(
                 // resourceStatus = pageDoc.querySelector('meta[name="workflow_state"]')?.getAttribute('content') === 'active' ? 'active' : 'unpublished';
                 const metaElements = Array.from(pageDoc.getElementsByTagName('meta'));
                 const workflowStateMeta = metaElements.find(meta => meta.getAttribute('name') === 'workflow_state');
-                resourceStatus = workflowStateMeta?.getAttribute('content') === 'active' ? 'active' : 'unpublished';
+                resourceStatus = workflowStateMeta?.getAttribute('content') === 'active' ? true : false;
             }
             resourceAnalysisHref = resourceHref;
         } else if (isAssignment) {
@@ -129,7 +129,7 @@ export async function inventoryIMSCC(
             if (assignmentSettingsPath) {
                 const settingsDoc = parser.parseFromString(fileContents[assignmentSettingsPath], "application/xml");
                 // resourceStatus = settingsDoc.querySelector('workflow_state')?.textContent === 'active' ? 'active' : 'unpublished';
-                resourceStatus = settingsDoc.getElementsByTagName('workflow_state').length > 0 && settingsDoc.getElementsByTagName('workflow_state')[0].textContent === 'active' ? 'active' : 'unpublished';
+                resourceStatus = settingsDoc.getElementsByTagName('workflow_state').length > 0 && settingsDoc.getElementsByTagName('workflow_state')[0].textContent === 'active' ? true : false;
                 // resourceTitle = settingsDoc.querySelector('title')?.textContent || resourceTitle;
                 resourceTitle = settingsDoc.getElementsByTagName('title').length > 0 ? settingsDoc.getElementsByTagName('title')[0].textContent || resourceTitle : resourceTitle;
             }
@@ -154,7 +154,7 @@ export async function inventoryIMSCC(
                     // resourceTitle = itemMetaDoc.querySelector('title')?.textContent || resourceTitle;
                     resourceTitle = itemMetaDoc.getElementsByTagName('title').length > 0 ? itemMetaDoc.getElementsByTagName('title')[0].textContent || resourceTitle : resourceTitle;
                     // resourceStatus = itemMetaDoc.querySelector('available')?.textContent === 'true' ? 'active' : 'unpublished';
-                    resourceStatus = itemMetaDoc.getElementsByTagName('available').length > 0 && itemMetaDoc.getElementsByTagName('available')[0].textContent === 'true' ? 'active' : 'unpublished';
+                    resourceStatus = itemMetaDoc.getElementsByTagName('available').length > 0 && itemMetaDoc.getElementsByTagName('available')[0].textContent === 'true' ? true : false;
                 }
                 // const quizType = itemMetaDoc.querySelector('quiz_type')?.textContent;
                 const quizType = itemMetaDoc.getElementsByTagName('quiz_type').length > 0 ? itemMetaDoc.getElementsByTagName('quiz_type')[0].textContent : null;
@@ -189,7 +189,7 @@ export async function inventoryIMSCC(
                     const itemSettingsDoc = parser.parseFromString(fileContents[settingsHref], "application/xml");
                     if (itemSettingsDoc) {
                         // resourceStatus = itemSettingsDoc.querySelector('workflow_state')?.textContent === 'active' ? 'active' : 'unpublished';
-                        resourceStatus = itemSettingsDoc.getElementsByTagName('workflow_state').length > 0 && itemSettingsDoc.getElementsByTagName('workflow_state')[0].textContent === 'active' ? 'active' : 'unpublished';
+                        resourceStatus = itemSettingsDoc.getElementsByTagName('workflow_state').length > 0 && itemSettingsDoc.getElementsByTagName('workflow_state')[0].textContent === 'active' ? true : false;
                     }
                     // const discussionType = itemSettingsDoc.querySelector('type')?.textContent;
                     const discussionType = itemSettingsDoc.getElementsByTagName('type').length > 0 ? itemSettingsDoc.getElementsByTagName('type')[0].textContent : null;
@@ -207,7 +207,7 @@ export async function inventoryIMSCC(
             identifier: resourceIdentifier,
             title: resourceTitle,
             identifierref: resourceIdentifierRef,
-            status: resourceStatus,
+            published: resourceStatus,
             clarifiedType: resourceClarifiedType,
             contentType: resourceType,
             analysisHref: resourceAnalysisHref,
@@ -229,39 +229,39 @@ export async function inventoryIMSCC(
         // const moduleTitle = metaModuleElement.querySelector('title')?.textContent!;
         const moduleTitle = metaModuleElement.getElementsByTagName('title').length > 0 ? metaModuleElement.getElementsByTagName('title')[0].textContent! : 'ERROR: untitled module';
         // const moduleStatus = metaModuleElement.querySelector('workflow_state')?.textContent === 'active' ? 'active' : 'unpublished';
-        const moduleStatus = metaModuleElement.getElementsByTagName('workflow_state').length > 0 && metaModuleElement.getElementsByTagName('workflow_state')[0].textContent === 'active' ? 'active' : 'unpublished';
+        const moduleStatus = metaModuleElement.getElementsByTagName('workflow_state').length > 0 && metaModuleElement.getElementsByTagName('workflow_state')[0].textContent === 'active' ? true : false;
 
         const metaModuleItemElements = Array.from(metaModuleElement.getElementsByTagName('item'));
         metaModuleItemElements.forEach(metaModuleItemElement => {
             const moduleItemIdentifier = metaModuleItemElement.getAttribute('identifier')!;
             // const indent = parseInt(metaModuleItemElement.querySelector('indent')?.textContent!, 10);
-            const indent = parseInt(metaModuleItemElement.getElementsByTagName('indent').length > 0 ? metaModuleItemElement.getElementsByTagName('indent')[0].textContent! : '0', 10);
+            const itemIndent = parseInt(metaModuleItemElement.getElementsByTagName('indent').length > 0 ? metaModuleItemElement.getElementsByTagName('indent')[0].textContent! : '0', 10);
             // const status = metaModuleItemElement.querySelector('workflow_state')?.textContent!;
-            const status = metaModuleElement.getElementsByTagName('workflow_state').length > 0 ? metaModuleItemElement.getElementsByTagName('workflow_state')[0].textContent! : 'ERROR: no workflow_state';
+            const itemStatus = metaModuleItemElement.getElementsByTagName('workflow_state').length > 0 && metaModuleItemElement.getElementsByTagName('workflow_state')[0].textContent === 'active' ? true : false;
             // const contentType = metaModuleItemElement.querySelector('content_type')?.textContent!;
-            const contentType = metaModuleElement.getElementsByTagName('content_type').length > 0 ? metaModuleElement.getElementsByTagName('content_type')[0].textContent! : 'ERROR: no content_type';
+            const itemContentType = metaModuleItemElement.getElementsByTagName('content_type').length > 0 ? metaModuleItemElement.getElementsByTagName('content_type')[0].textContent! : 'ERROR: no content_type';
             // const title = metaModuleItemElement.querySelector('title')?.textContent!;
-            const title = metaModuleElement.getElementsByTagName('title').length > 0 ? metaModuleElement.getElementsByTagName('title')[0].textContent! : 'ERROR: untitled item';
+            const itemTitle = metaModuleItemElement.getElementsByTagName('title').length > 0 ? metaModuleItemElement.getElementsByTagName('title')[0].textContent! : 'ERROR: untitled item';
             // const moduleItemIdentifierRef = metaModuleItemElement.querySelector('identifierref')?.textContent || null;
             const moduleItemIdentifierRef = metaModuleItemElement.getElementsByTagName('identifierref').length > 0 ? metaModuleItemElement.getElementsByTagName('identifierref')[0].textContent || null : null;
-            let clarifiedType = 'tbd';
+            let itemClarifiedType = 'tbd';
 
             const matchingResource = allResources.find(r => r.identifier === moduleItemIdentifierRef);
 
             if (matchingResource) {
-                clarifiedType = matchingResource?.clarifiedType || contentType;
+                itemClarifiedType = matchingResource?.clarifiedType || itemContentType;
                 matchingResource.moduleTitle = moduleTitle;
             }
 
             const moduleItem: ModuleItem = {
                 identifier: moduleItemIdentifier,
-                title,
+                title: itemTitle,
                 identifierRef: moduleItemIdentifierRef,
                 moduleTitle: moduleTitle,
-                status,
-                indent,
-                clarifiedType,
-                contentType
+                published: itemStatus,
+                indent: itemIndent,
+                clarifiedType: itemClarifiedType,
+                contentType: itemContentType
             };
 
             moduleItems.push(moduleItem);
@@ -272,9 +272,10 @@ export async function inventoryIMSCC(
         const moduleObj = {
             title: moduleTitle,
             items: moduleItems,
-            status: moduleStatus
+            published: moduleStatus
         };
 
+        // console.log(moduleObj);
         allModules.push(moduleObj);
     });
 
@@ -295,9 +296,7 @@ export async function inventoryIMSCC(
         * Analyze provided items: extract links/files/videos and run accessibility checks.
         * items - items to analyze (with href and analysisType)
         */
-export async function analyzeIMSCCForObjects(parser: PlatformDOMParser, fileContents: { [key: string]: string }, items: Resource[],
-):
-    Promise<{videosResults: VideoObject[], filesResults: FileObject[], linksResults: LinkObject[]}> {
+export async function analyzeIMSCCForObjects(parser: PlatformDOMParser, fileContents: { [key: string]: string }, items: Resource[]): Promise<{videosResults: VideoObject[], filesResults: FileObject[], linksResults: LinkObject[]}> {
     if (parser === null) throw Error('analyzeIMSCCContent: parser is null.');
 
     const allLinks: LinkObject[] = [], allFiles: FileObject[] = [], allVideos: VideoObject[] = [];
@@ -383,7 +382,7 @@ export async function analyzeIMSCCRichContentForAccessibility(parser: PlatformDO
                         type,
                         parentItemTitle: item.title,
                         parentItemType: getReadableType(item.clarifiedType) || 'ERROR: unknown type',
-                        parentItemStatus: item.status,
+                        parentItemPublished: item.published,
                         parentItemModuleTitle: item.moduleTitle
                     }) as EnhancedAxeResult;
 
@@ -575,44 +574,3 @@ export function getReadableType(type: string): string | null {
             return null;
     }
 }
-
-/**
-         * Return icon & label given a clarified type.
-         * Kept implementation and SVGs identical to original to avoid behavioral changes.
-        
-        
-function getItemTypeDetails(type: string): { icon: string, label: string } {
-    const iconClass = "w-5 h-5 mr-3 text-gray-500 flex-shrink-0";
-    let details = {
-        icon: `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`,
-        label: 'File'
-    };
-
-    if (type === 'contextmodulesubheader') {
-        details.label = 'Header';
-        details.icon = `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>`;
-    } else if (type === 'assignment') {
-        details.label = 'Assignment';
-        details.icon = `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>`;
-    } else if (type === 'page') {
-        details.label = 'Page';
-        details.icon = `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
-    } else if (type === 'externalurl') {
-        details.label = 'Link';
-        details.icon = `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>`;
-    } else if (type === 'survey') {
-        details.label = 'Survey';
-        details.icon = `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>`;
-    } else if (type === 'quiz') {
-        details.label = 'Quiz';
-        details.icon = `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
-    } else if (type === 'announcement') {
-        details.label = 'Announcement';
-        details.icon = `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-2.236 9.168-5.518l-2.168 1.558a6.002 6.002 0 00-4.5 3.468V13a3 3 0 00-3-3H5.436z"></path></svg>`;
-    } else if (type === 'discussion') {
-        details.label = 'Discussion';
-        details.icon = `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>`;
-    }
-    return details;
-}
-     */

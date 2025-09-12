@@ -5,8 +5,8 @@ export interface Resource {
     moduleTitle?: string,
     identifier: string,
     identifierref: string | null,
-    href?: string
-    status: string,
+    href?: string,
+    published: boolean,
     clarifiedType: string,
     contentType: string,
     analysisHref: string | null,
@@ -16,7 +16,7 @@ export interface Resource {
 export interface Module {
     title: string,
     items: ModuleItem[],
-    status: string,
+    published: boolean,
 };
 
 export interface ModuleItem {
@@ -24,7 +24,7 @@ export interface ModuleItem {
     title: string,
     identifierRef: string | null,
     moduleTitle: string,
-    status: string,
+    published: boolean,
     indent: number,
     clarifiedType: string,
     contentType: string,
@@ -61,7 +61,7 @@ export type EnhancedAxeResult = Axe.Result & {
     type: string,
     parentItemTitle: string,
     parentItemType: string,
-    parentItemStatus: string,
+    parentItemPublished: boolean,
     parentItemModuleTitle: string,
 };
 
