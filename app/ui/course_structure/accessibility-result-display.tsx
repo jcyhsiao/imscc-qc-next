@@ -1,8 +1,15 @@
 import { EnhancedAxeResults, EnhancedAxeResult } from "@/app/lib/definitions";
-import { Accordion, CheckboxGroup, Checkbox, Flex, Disclosure, Switch, DisclosureTitle, DisclosurePanel, Link, Text, TextArea, View } from "@adobe/react-spectrum";
+import { Well, Accordion, CheckboxGroup, Checkbox, Flex, Disclosure, Switch, DisclosureTitle, DisclosurePanel, Link, Text, TextArea, View } from "@adobe/react-spectrum";
 import Axe from "axe-core";
 import { useState } from "react";
 import { capitalize } from "@/app/ui/helpers";
+
+type AccessibilityResultDisplayProps = {
+    type: string;
+    result: EnhancedAxeResult;
+    selectedResultTypes: string[];
+    selectedParentResourceTypes: string[];
+}
 
 export function AccessibilityResultsDisplay({ results }: { results: EnhancedAxeResults }) {
     const allResultTypes: string[] = []
@@ -19,7 +26,7 @@ export function AccessibilityResultsDisplay({ results }: { results: EnhancedAxeR
     const allParentResourceTypes = Array.from(new Set(combinedResults.map(result => result.parentItemType)));
 
     const [selectedResultTypes, setSelectedResultTypes] = useState(['violations']);
-    const [selectedParentResourceTypes, setSelectedParentResourceTypes] = useState([...allParentResourceTypes]);
+    const [selectedResourceTypes, setSelectedResourceTypes] = useState([...allParentResourceTypes]);
     const [showFromPublishedParentOnly, setShowFromPublishedParentOnly] = useState(false);
     const [showFromInModuleParentOnly, setShowFromInModuleParentOnly] = useState(false);
 
@@ -53,7 +60,6 @@ export function AccessibilityResultsDisplay({ results }: { results: EnhancedAxeR
         }
     });
 
-    console.log(allResultsByResource);
 
     return (
         <>
@@ -65,7 +71,7 @@ export function AccessibilityResultsDisplay({ results }: { results: EnhancedAxeR
                         ))
                     }
                 </CheckboxGroup>
-                <CheckboxGroup label="Found in Parent Resource" name='parent resource type' value={selectedParentResourceTypes} onChange={setSelectedParentResourceTypes}>
+                <CheckboxGroup label="Found in Parent Resource" name='parent resource type' value={selectedResourceTypes} onChange={setSelectedResourceTypes}>
                     {
                         allParentResourceTypes.map(type => (
                             <Checkbox key={type} value={type}>{type} ({combinedResults.filter(result => result.parentItemType === type).length})</Checkbox>
@@ -77,57 +83,67 @@ export function AccessibilityResultsDisplay({ results }: { results: EnhancedAxeR
             </Flex>
             <Accordion>
                 {
-                    Object.entries(allResultsByResource).map(([id, body]) => (
-                        <Disclosure id={id} key={id} isHidden={
-                            showFromPublishedParentOnly && !body.resourceStatus ||
-                            showFromInModuleParentOnly && body.parentModuleTitle === undefined
+                    Object.entries(allResultsByResource).map(([id, body]) => {
+                        let resultsCount = 0;
+                        selectedResultTypes.forEach(type => {
+                            resultsCount += body.results.filter(result => result.type === type).length;
+                        });
+
+
+                        return (
+                            <Disclosure id={id} key={id} isHidden={
+                                resultsCount === 0 ||
+                                !selectedResourceTypes.includes(body.resourceType) ||
+                                showFromPublishedParentOnly && !body.resourceStatus ||
+                                showFromInModuleParentOnly && body.parentModuleTitle === undefined
                             }>
-                            <DisclosureTitle>
-                                {body.resourceTitle} {body.parentModuleTitle} {body.resourceType} {body.resourceStatus ? 'Published' : 'Unpublished'}
-                            </DisclosureTitle>
-                            <DisclosurePanel>
-                                <AccessibilityResultDisplay resourceResults={body.results} />
-                            </DisclosurePanel>
-                        </Disclosure>
-                    ))
+                                <DisclosureTitle>
+                                    {body.resourceTitle} {body.parentModuleTitle} {body.resourceType} {body.resourceStatus ? 'Published' : 'Unpublished'}
+                                </DisclosureTitle>
+                                <DisclosurePanel>
+                                    <Accordion>
+                                        {
+                                            body.results.map(result => (
+                                                <AccessibilityResultDisplay type={result.type} result={result} selectedResultTypes={selectedResultTypes} selectedParentResourceTypes={selectedResourceTypes} />
+                                            ))
+                                        }
+                                    </Accordion>
+                                </DisclosurePanel>
+                            </Disclosure>
+                        )
+                    }
+                    )
                 }
             </Accordion>
         </>
     );
 }
 
-export function AccessibilityResultDisplay({ resourceResults }: { resourceResults: EnhancedAxeResult[] }) {
-
-    return (
-        <Accordion>
-            {
-                resourceResults.map(result => (
-                    <AxeResultDisplay type={result.type} axeResult={result} />
-                ))
-            }
-        </Accordion>
-    )
-}
-
-export function AxeResultDisplay({ type, axeResult } : {type: string, axeResult: Axe.Result}) {
+export function AccessibilityResultDisplay({ type, result, selectedResultTypes, selectedParentResourceTypes }: AccessibilityResultDisplayProps) {
     // Safe access for nodes array to avoid undefined errors
-    const nodeHtml = (axeResult.nodes && axeResult.nodes[0] && axeResult.nodes[0].html) ? axeResult.nodes[0].html.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
-    const nodeTargets = (axeResult.nodes && axeResult.nodes[0] && axeResult.nodes[0].target) ? axeResult.nodes[0].target.join(', ') : '';
+    // const nodeHtml = (axeResult.nodes && axeResult.nodes[0] && axeResult.nodes[0].html) ? axeResult.nodes[0].html.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+    const nodeHtml = (result.nodes && result.nodes[0] && result.nodes[0].html) ? result.nodes[0].html : '';
+    const nodeTargets = (result.nodes && result.nodes[0] && result.nodes[0].target) ? result.nodes[0].target.join(', ') : '';
+    const isHidden = !(selectedResultTypes.includes(type) && selectedParentResourceTypes.includes(result.parentItemType));
 
     return (
-        <Disclosure id={axeResult.id}>
+        <Disclosure id={result.id} isHidden={isHidden}>
             <DisclosureTitle>
-                {type} {axeResult.help} {axeResult.impact?.toString()}
+                {type} {result.help} {result.impact?.toString()}
             </DisclosureTitle>
             <DisclosurePanel>
                 <View>
                     <Text>Description:</Text>
-                    {axeResult.description}
-                    <Text>Affected Element:</Text>
-                    <TextArea aria-label={nodeHtml} defaultValue={nodeHtml} isReadOnly />
+                    {result.description}
+                    {nodeHtml !== '' &&
+                        <>
+                            <Text>Affected Element:</Text>
+                            <Well>{nodeHtml}</Well>
+                        </>
+                    }
                     <Text>CSS Selector:</Text>
                     <Text>{nodeTargets}</Text>
-                    <Link href={axeResult.helpUrl} target="_blank" rel="noopener noreferrer">More Info</Link>
+                    <Link href={result.helpUrl} target="_blank" rel="noopener noreferrer">More Info</Link>
                 </View>
             </DisclosurePanel>
         </Disclosure>
