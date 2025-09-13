@@ -1,6 +1,5 @@
 import { EnhancedAxeResults, EnhancedAxeResult } from "@/app/lib/definitions";
-import { Well, Accordion, CheckboxGroup, Checkbox, Flex, Disclosure, Switch, DisclosureTitle, DisclosurePanel, Link, Text, TextArea, View } from "@adobe/react-spectrum";
-import Axe from "axe-core";
+import { Well, Accordion, CheckboxGroup, Checkbox, Flex, Disclosure, Switch, DisclosureTitle, DisclosurePanel, Link, Text, View } from "@adobe/react-spectrum";
 import { useState } from "react";
 import { capitalize } from "@/app/ui/helpers";
 
@@ -104,7 +103,7 @@ export function AccessibilityResultsDisplay({ results }: { results: EnhancedAxeR
                                     <Accordion>
                                         {
                                             body.results.map(result => (
-                                                <AccessibilityResultDisplay type={result.type} result={result} selectedResultTypes={selectedResultTypes} selectedParentResourceTypes={selectedResourceTypes} />
+                                                <AccessibilityResultDisplay key={result.id} type={result.type} result={result} selectedResultTypes={selectedResultTypes} selectedParentResourceTypes={selectedResourceTypes} />
                                             ))
                                         }
                                     </Accordion>
