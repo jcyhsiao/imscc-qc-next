@@ -1,6 +1,6 @@
 import { EnhancedAxeResults, EnhancedAxeResult } from "@/app/lib/definitions";
 import { Well, Accordion, CheckboxGroup, Checkbox, Flex, Disclosure, Switch, DisclosureTitle, DisclosurePanel, Link, Text, View } from "@adobe/react-spectrum";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { capitalize } from "@/app/ui/helpers";
 
 type AccessibilityResultDisplayProps = {
@@ -11,54 +11,67 @@ type AccessibilityResultDisplayProps = {
 }
 
 export function AccessibilityResultsDisplay({ results }: { results: EnhancedAxeResults }) {
-    const allResultTypes: string[] = []
-    if (results.violations.length > 0) allResultTypes.push('violations');
-    if (results.incomplete.length > 0) allResultTypes.push('incomplete');
-    if (results.passes.length > 0) allResultTypes.push('passes');
+    const allResultTypes = useMemo(() => {
+        const types: ('violations' | 'incomplete' | 'passes')[] = [];
+        if (results.violations.length > 0) types.push('violations');
+        if (results.incomplete.length > 0) types.push('incomplete');
+        if (results.passes.length > 0) types.push('passes');
+        return types;
+    }, [results.violations.length, results.incomplete.length, results.passes.length]); // Dependencies: lengths of the arrays
 
-    const combinedResults = [
-        ...results.violations,
-        ...results.incomplete,
-        ...results.passes,
-    ];
+    const combinedResults = useMemo(() => {
+        return [
+            ...results.violations,
+            ...results.incomplete,
+            ...results.passes,
+        ];
+    }, [results.violations, results.incomplete, results.passes]); // Dependencies: the arrays themselves
 
-    const allParentResourceTypes = Array.from(new Set(combinedResults.map(result => result.parentItemType)));
+
+const allParentResourceTypes = useMemo(() => {
+        return Array.from(new Set(combinedResults.map(result => result.parentItemType)));
+    }, [combinedResults]); // Dependency: combinedResults
 
     const [selectedResultTypes, setSelectedResultTypes] = useState(['violations']);
     const [selectedResourceTypes, setSelectedResourceTypes] = useState([...allParentResourceTypes]);
     const [showFromPublishedParentOnly, setShowFromPublishedParentOnly] = useState(false);
     const [showFromInModuleParentOnly, setShowFromInModuleParentOnly] = useState(false);
 
-    const allResourcesInResults = Array.from(new Set(combinedResults.map(result => result.parentItemIdentifier)));
-    const allResultsByResource: {
-        [key: string]:
-        {
-            resourceTitle: string;
-            parentModuleTitle: string;
-            resourceType: string;
-            resourceStatus: boolean;
-            results: EnhancedAxeResult[]
-        }
-    } = {};
-    allResourcesInResults.forEach(resourceIdentifier => {
-        const resourceResults = combinedResults.filter(result => result.parentItemIdentifier === resourceIdentifier);
-        if (resourceResults.length > 0) {
-            const firstResourceResult = resourceResults[0];
-            const resourceTitle = firstResourceResult.parentItemTitle;
-            const parentModuleTitle = firstResourceResult.parentItemModuleTitle;
-            const resourceType = firstResourceResult.parentItemType;
-            const resourceStatus = firstResourceResult.parentItemPublished;
+ const allResourcesInResults = useMemo(() => {
+        return Array.from(new Set(combinedResults.map(result => result.parentItemIdentifier)));
+    }, [combinedResults]); // Dependency: combinedResults
 
-            allResultsByResource[resourceIdentifier] = {
-                resourceTitle,
-                parentModuleTitle,
-                resourceType,
-                resourceStatus,
-                results: resourceResults
+     const allResultsByResource = useMemo(() => {
+        const byResource: {
+            [key: string]:
+            {
+                resourceTitle: string;
+                parentModuleTitle: string;
+                resourceType: string;
+                resourceStatus: boolean;
+                results: EnhancedAxeResult[]
             }
-        }
-    });
+        } = {};
+        allResourcesInResults.forEach(resourceIdentifier => {
+            const resourceResults = combinedResults.filter(result => result.parentItemIdentifier === resourceIdentifier);
+            if (resourceResults.length > 0) {
+                const firstResourceResult = resourceResults[0];
+                const resourceTitle = firstResourceResult.parentItemTitle;
+                const parentModuleTitle = firstResourceResult.parentItemModuleTitle;
+                const resourceType = firstResourceResult.parentItemType;
+                const resourceStatus = firstResourceResult.parentItemPublished;
 
+                byResource[resourceIdentifier] = {
+                    resourceTitle,
+                    parentModuleTitle,
+                    resourceType,
+                    resourceStatus,
+                    results: resourceResults
+                }
+            }
+        });
+        return byResource;
+    }, [allResourcesInResults, combinedResults]); // Dependencies: allResourcesInResults, combinedResults
 
     return (
         <>

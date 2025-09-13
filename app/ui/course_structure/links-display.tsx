@@ -3,7 +3,7 @@ import { Checkbox, Flex, CheckboxGroup, Badge, Grid, Text, View } from '@adobe/r
 // import { Accordion, Disclosure, DisclosureTitle, DisclosurePanel } from '@adobe/react-spectrum';
 import { getReadableType } from '@/app/lib/imscc-handling';
 import { capitalize } from '@/app/ui/helpers';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 type LinksDisplayProps = {
     links: LinkObject[];
@@ -11,16 +11,29 @@ type LinksDisplayProps = {
 }
 
 export function LinksDisplay({ links }: LinksDisplayProps) {
-    const allFoundLinkTypes = new Set(links.map(link => link.type.toString()));
-    const countsByTypes: {[key: string]: number} = {};
-    Array.from(allFoundLinkTypes).forEach(type => {
-        countsByTypes[type] = links.filter(link => link.type === type).length
-    });
-    const allFoundParentResourceTypes = new Set(links.map(link => link.parentResourceType));
-    const countsByParentResourceTypes: {[key: string]: number} = {};
-    Array.from(allFoundParentResourceTypes).forEach(type => {
-        countsByParentResourceTypes[type] = links.filter(link => link.parentResourceType === type).length;
-    });
+const allFoundLinkTypes = useMemo(() => {
+        return new Set(links.map(link => link.type.toString()));
+    }, [links]); // Dependency: links
+
+    const countsByTypes = useMemo(() => {
+        const counts: { [key: string]: number } = {};
+        Array.from(allFoundLinkTypes).forEach(type => {
+            counts[type] = links.filter(link => link.type.toString() === type).length;
+        });
+        return counts;
+    }, [links, allFoundLinkTypes]); // Dependencies: links, allFoundLinkTypes
+
+     const allFoundParentResourceTypes = useMemo(() => {
+        return new Set(links.map(link => link.parentResourceType));
+    }, [links]); // Dependency: links
+
+    const countsByParentResourceTypes = useMemo(() => {
+        const counts: { [key: string]: number } = {};
+        Array.from(allFoundParentResourceTypes).forEach(type => {
+            counts[type] = links.filter(link => link.parentResourceType === type).length;
+        });
+        return counts;
+    }, [links, allFoundParentResourceTypes]); // Dependencies: links, allFoundParentResourceTypes
 
     /*
     const groupedByLinkType = links.reduce((acc, link) => {
