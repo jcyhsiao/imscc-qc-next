@@ -3,7 +3,7 @@ import { ModulesDisplay } from '@/app/ui/course_structure/modules-display';
 import { Text } from '@adobe/react-spectrum';
 import { Suspense } from 'react';
 
-export default function CourseStructure({ modules }: { modules: Module[] }) {
+export default function CourseStructureTab({ modules }: { modules: Module[] }) {
     return (
         <Suspense fallback={<Text>Loading modules...</Text>}>
             {

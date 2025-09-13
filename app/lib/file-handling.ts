@@ -305,6 +305,7 @@ export async function analyzeIMSCCForObjects(parser: PlatformDOMParser, fileCont
 
     for (const item of items) {
         if (!item.analysisHref) continue
+
         const content = fileContents[item.analysisHref];
         if (!content) continue;
 
@@ -439,7 +440,7 @@ function findLinks(doc: Document, item: Resource): LinkObject[] {
             } else {
                 type = 'external'
             }
-            links.push({ url: href, text: a.textContent.trim(), parentResourceTitle: item.title, type: type as LinkType });
+            links.push({ url: href, text: a.textContent.trim(), parentResourceTitle: item.title, parentResourceType: item.clarifiedType, type: type as LinkType });
         }
     });
     return links;

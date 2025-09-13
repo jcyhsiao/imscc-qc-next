@@ -1,26 +1,7 @@
 import { Resource } from '@/app/lib/definitions';
 import { Accordion, Disclosure, DisclosureTitle, DisclosurePanel, Badge, Grid, Flex, View, Text } from '@adobe/react-spectrum';
 import { getReadableType } from '@/app/lib/file-handling';
-/*
 
-
-            container.querySelectorAll('.accordion-header').forEach(button => {
-                button.addEventListener('click', () => {
-                    const content = button.nextElementSibling;
-                    const icon = button.querySelector('svg');
-                    if (content instanceof HTMLElement && icon) {
-                        if (content.style.maxHeight.charAt(0) !== '0') {
-                            content.style.maxHeight = '0px';
-                            icon.classList.remove('rotate-180');
-                        } else {
-                            content.style.maxHeight = 'fit-content';
-                            icon.classList.add('rotate-180');
-                        }
-                    }
-                });
-            });
-        }
-        */
 
 export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
     const groupedByType = resources.reduce((acc, item) => {
@@ -30,6 +11,10 @@ export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
     }, {} as { [key: string]: Resource[] });
 
     return (
+        <>
+        <View>
+            <Text>Note: this does not currently list raw links in modules, including external tools</Text>
+        </View>
             <Accordion width='95vw'>
                 {
                     Object.entries(groupedByType).map(([type, items]) => (
@@ -44,6 +29,7 @@ export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
                     ))
                 }
             </Accordion>
+            </>
         );
 }
 
@@ -51,7 +37,7 @@ export function ResourceItemDisplay({ resource }: { resource: Resource }) {
     return (
         <View padding={"size-100"}>
             <Grid columns={['9fr', '3fr']} gap='size-100'>
-                {resource.title}
+                <Text>{resource.title}</Text>
                 <Flex gap='size-100' justifyContent='end'>
                     {
                         resource.moduleTitle

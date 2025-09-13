@@ -55,6 +55,7 @@ export interface LinkObject {
     url: string;
     text: string;
     parentResourceTitle: string;
+    parentResourceType: string;
     type: LinkType;
 };
 

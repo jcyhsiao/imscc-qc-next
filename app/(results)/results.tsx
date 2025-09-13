@@ -7,8 +7,9 @@ import { Resource, Module } from '@/app/lib/definitions';
 import { VideoObject, FileObject, LinkObject } from '@/app/lib/definitions';
 import { EnhancedAxeResults } from '@/app/lib/definitions';
 
-import CourseStructure from '@/app/(results)/course-structure';
-import CourseResources from '@/app/(results)/course-resources';
+import CourseStructureTab from '@/app/(results)/course-structure';
+import CourseResourcesTab from '@/app/(results)/course-resources';
+import CourseLinksTab from './course-links';
 
 type Props = {
     selectedFile?: File | null;
@@ -103,16 +104,16 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                             </TabList>
                             <TabPanels>
                                 <Item key="struct">
-                                    <CourseStructure modules={allModules} />
+                                    <CourseStructureTab modules={allModules} />
                                 </Item>
                                 <Item key="rsc">
-                                    <CourseResources resources={allResources} / >
+                                    <CourseResourcesTab resources={allResources} / >
                                 </Item>
                                 <Item key="ally">
                                     Alea jacta est.
                                 </Item>
                                 <Item key="links">
-                                    Alea jacta est.
+                                    <CourseLinksTab links={allLinks} />
                                 </Item>
                                 <Item key="files">
                                     Alea jacta est.

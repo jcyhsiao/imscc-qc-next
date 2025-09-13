@@ -1,5 +1,5 @@
 import { Badge, Icon, Text } from '@adobe/react-spectrum'
-import { Heading, MessagesSquare, BookA, BookCheck, StickyNote, Link, MessageCircleQuestionMark, Megaphone } from 'lucide-react';
+import { Heading, MessagesSquare, FileQuestionMark, BookA, BookCheck, NotebookText, Link as LRLink, MessageCircleQuestionMark, Megaphone } from 'lucide-react';
 import { JSX } from 'react';
 import { getReadableType } from '@/app/lib/file-handling'
 
@@ -13,46 +13,56 @@ export const QC_BADGES = {
         info: createBadge('Info'),
     },
     */
+   linkType: {
+    osu: <Badge variant='magenta'>OSU</Badge>,
+    external: <Badge variant='seafoam'>External</Badge>,
+    course: <Badge variant='yellow'>Course</Badge>,
+    unknown: <Badge variant='neutral'>Unknown</Badge>,
+   },
     status: {
         published: <Badge variant='positive'>Published</Badge>,
         unpublished: <Badge variant='negative'>Unpublished</Badge>,
     }
 };
 
+export function capitalize(s: string): string {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 export function getIconForItemType(type: string): JSX.Element {
-    const sharedProps = {};
-    const ariaLabel = getReadableType(type);
-    let icon: JSX.Element | null = null;
+    const ariaLabel = getReadableType(type) || 'unknown type';
+    const sharedProps = {strokeWidth: 1, ariaLabel: {ariaLabel}};
+    let icon: JSX.Element;
 
     switch (type) {
         case 'contextmodulesubheader':
-            icon = <Heading />;
+            icon = <Heading {...sharedProps}/>;
             break;
         case 'assignment':
-            icon = <BookA />;
+            icon = <BookA {...sharedProps} />;
             break;
         case 'page':
-            icon = <StickyNote />
+            icon = <NotebookText {...sharedProps} />
             break;
         case 'externalurl':
-            icon = <Link />
+            icon = <LRLink {...sharedProps} />
             break;
         case 'survey':
-            icon = <MessageCircleQuestionMark />
+            icon = <MessageCircleQuestionMark {...sharedProps}/>
             break;
         case 'quiz':
-            icon = <BookCheck />
+            icon = <BookCheck {...sharedProps}/>
             break;
         case 'announcement':
-            icon = <Megaphone />
+            icon = <Megaphone {...sharedProps}/>
             break;
         case 'discussion':
-            icon = <MessagesSquare />
+            icon = <MessagesSquare {...sharedProps}/>
             break;
+        default:
+            icon = <FileQuestionMark {...sharedProps}/>
     }
 
-    return (ariaLabel && icon)
-        ? <Icon aria-label={ariaLabel} {...sharedProps}>{icon}</Icon>
-        : <Text>getIconForItemType: ERROR label and/or icon null</Text>
+    return icon;
 }
 

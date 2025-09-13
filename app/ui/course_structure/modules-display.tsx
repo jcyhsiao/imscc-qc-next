@@ -24,7 +24,7 @@ export function ModulesDisplay({ modules }: { modules: Module[] }) {
                 <Disclosure id={module.title} key={module.identifier}>
                     <DisclosureTitle>
                         <Grid width='100vw' columns={['11fr', '1fr']}>
-                            {module.title}
+                            <Text>{module.title}</Text>
                             {module.published ? QC_BADGES.status.published : QC_BADGES.status.unpublished}
                         </Grid>
                     </DisclosureTitle>
