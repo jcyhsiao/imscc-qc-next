@@ -20,15 +20,15 @@ type Props = {
 export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: Props) {
     const [isAnalysisErrored, setIsAnalysisErrored] = useState(false);
     const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
-    const [parser, setParser] = useState<DOMParser | null>(null);
+    const [, setParser] = useState<DOMParser | null>(null);
 
-    const [allFileContents, setAllFileContents] = useState<{ [key: string]: string }>({});
+    const [, setAllFileContents] = useState<{ [key: string]: string }>({});
     const [allResources, setAllResources] = useState<Resource[]>([]);
     const [allModules, setAllModules] = useState<Module[]>([]);
-    const [allVideos, setAllVideos] = useState<VideoObject[]>([]);
-    const [allFiles, setAllFiles] = useState<FileObject[]>([]);
+    const [, setAllVideos] = useState<VideoObject[]>([]);
+    const [, setAllFiles] = useState<FileObject[]>([]);
     const [allLinks, setAllLinks] = useState<LinkObject[]>([]);
-    const [allAccessibilityResults, setAllAccessibilityResults] = useState<EnhancedAxeResults | null>(null);
+    const [, setAllAccessibilityResults] = useState<EnhancedAxeResults | null>(null);
 
     // Use useEffect to trigger the analysis when startAnalysis or selectedFile changes
     useEffect(() => {
@@ -69,7 +69,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
         };
 
         performAnalysis();
-    }, [isAnalyzing, selectedFile, isAnalysisComplete]);
+    }, [isAnalyzing, setIsAnalyzing, selectedFile, isAnalysisComplete]);
 
     return (
         <>

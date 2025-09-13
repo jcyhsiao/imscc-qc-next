@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Divider, FileTrigger, Flex, Heading, Text, View } from '@adobe/react-spectrum';
+import { Button, Divider, FileTrigger, Heading, Text, View } from '@adobe/react-spectrum';
 import { useState } from 'react';
 import Results from '@/app/(results)/results';
 

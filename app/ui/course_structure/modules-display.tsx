@@ -1,7 +1,7 @@
 import { Module, ModuleItem } from '@/app/lib/definitions';
 import { getReadableType } from '@/app/lib/file-handling';
 import { QC_BADGES, getIconForItemType } from '@/app/ui/helpers';
-import { useId } from 'react';
+// import { useId } from 'react';
 import { Text, Grid } from '@adobe/react-spectrum';
 import { Accordion, Badge, Disclosure, DisclosureTitle, DisclosurePanel, Flex, View } from '@adobe/react-spectrum'
 /*

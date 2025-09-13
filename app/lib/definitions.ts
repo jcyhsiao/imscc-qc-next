@@ -48,12 +48,13 @@ export interface FileObject {
     parentResourceTitle: string;
 };
 
-const LINK_TYPES = ['osu', 'external', 'course', 'unknown'] as const;
-export type LinkType = (typeof LINK_TYPES)[number];
+type LINK_TYPES = ['osu', 'external', 'course', 'unknown'];
+export type LinkType = LINK_TYPES[number];
 
 export interface LinkObject {
     url: string;
     text: string;
+    parentResourceIdentifier: string;
     parentResourceTitle: string;
     parentResourceType: string;
     type: LinkType;

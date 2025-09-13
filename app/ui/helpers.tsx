@@ -1,4 +1,4 @@
-import { Badge, Icon, Text } from '@adobe/react-spectrum'
+import { Badge } from '@adobe/react-spectrum'
 import { Heading, MessagesSquare, FileQuestionMark, BookA, BookCheck, NotebookText, Link as LRLink, MessageCircleQuestionMark, Megaphone } from 'lucide-react';
 import { JSX } from 'react';
 import { getReadableType } from '@/app/lib/file-handling'

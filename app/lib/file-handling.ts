@@ -440,7 +440,7 @@ function findLinks(doc: Document, item: Resource): LinkObject[] {
             } else {
                 type = 'external'
             }
-            links.push({ url: href, text: a.textContent.trim(), parentResourceTitle: item.title, parentResourceType: item.clarifiedType, type: type as LinkType });
+            links.push({ url: href, text: a.textContent.trim(), parentResourceIdentifier: item.identifier, parentResourceTitle: item.title, parentResourceType: item.clarifiedType, type: type as LinkType });
         }
     });
     return links;
@@ -482,7 +482,7 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
 
     // doc.querySelectorAll('video').forEach(video => {
     videoElements.forEach(video => {
-        const classes = (video.className || '').toLowerCase();
+        // const classes = (video.className || '').toLowerCase();
         const title = video.title || '(Title Not Found)';
         const source = video.querySelector('source');
         const src = source?.src || '';
