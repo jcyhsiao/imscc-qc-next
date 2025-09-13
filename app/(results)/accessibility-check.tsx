@@ -5,12 +5,10 @@ import { useState } from "react";
 
 type Props = {
     resources: Resource[];
-    results: EnhancedAxeResults | null;
+    results: EnhancedAxeResults;
 }
 
 export default function AccessibilityCheckTab({resources, results}: Props) {
-    if (results === null) return <Text>(No accessibility results found)</Text>
-
     const allResultTypes: string[] = []
     if (results.violations.length > 0) allResultTypes.push('violations');
     if (results.incomplete.length > 0) allResultTypes.push('incomplete');
@@ -33,7 +31,7 @@ export default function AccessibilityCheckTab({resources, results}: Props) {
             <CheckboxGroup label="Result Types" name='result type' value={selectedResultTypes} onChange={setSelectedResultTypes}>
                 {
                     allResultTypes.map(type => (
-                        <Checkbox key={type} value={type}>{type !== 'incomplete' ? capitalize(type) : 'Calls for Manual Verification'} ({(results as any)[type].length})</Checkbox>
+                        <Checkbox key={type} value={type}>{type !== 'incomplete' ? capitalize(type) : 'Calls for Manual Verification'} ({results[type as 'violations' | 'incomplete' | 'passes'].length})</Checkbox>
                     ))
                 }
             </CheckboxGroup>

@@ -111,7 +111,9 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                                     <CourseResourcesTab resources={allResources} />
                                 </Item>
                                 <Item key="ally">
-                                    <AccessibilityCheckTab resources={allResources} results={allAccessibilityResults} />
+                                    results === null
+                                    ? <Text>(No accessibility results found)</Text>
+                                    : <AccessibilityCheckTab resources={allResources} results={allAccessibilityResults!} />
                                 </Item>
                                 <Item key="links">
                                     <CourseLinksTab links={allLinks} />
