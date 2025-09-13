@@ -62,6 +62,7 @@ export interface LinkObject {
 
 export type EnhancedAxeResult = Axe.Result & {
     type: string,
+    parentItemIdentifier: string,
     parentItemTitle: string,
     parentItemType: string,
     parentItemPublished: boolean,

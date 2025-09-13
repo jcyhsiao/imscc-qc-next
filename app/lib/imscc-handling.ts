@@ -383,6 +383,7 @@ export async function analyzeIMSCCRichContentForAccessibility(parser: PlatformDO
                     const addMetadata = (type: string, issue: Axe.Result) => ({
                         ...issue,
                         type,
+                        parentItemIdentifier: item.identifier,
                         parentItemTitle: item.title,
                         parentItemType: getReadableType(item.clarifiedType) || 'ERROR: unknown type',
                         parentItemPublished: item.published,

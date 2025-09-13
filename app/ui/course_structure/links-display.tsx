@@ -64,9 +64,11 @@ export function LinksDisplay({ links }: LinksDisplayProps) {
                     links.sort((a, b) => a.parentResourceTitle.localeCompare(b.parentResourceTitle)).map(link => (
                         // (link.type in selectedLinkTypes) && (link.parentResourceType in selectedParentResourceTypes) &&
 
-                        (selectedLinkTypes.includes(link.type.toString()) && selectedParentResourceTypes.includes(link.parentResourceType)) &&
                         // <LinkDisplay key={`${link.text}-rand${Math.random() * 1000}`} link={link} linkCheckResult={linkCheckResults[link.url] || null} />
-                        <LinkDisplay key={`${link.text}-rand${Math.random() * 1000}`} link={link} />
+                        <LinkDisplay key={`${link.text}-rand${Math.random() * 1000}`} link={link} isHidden={
+                            selectedLinkTypes.includes(link.type.toString())
+                            && selectedParentResourceTypes.includes(link.parentResourceType)
+                        } />
                     ))
                 }
             </View>
@@ -89,12 +91,13 @@ export function LinksDisplay({ links }: LinksDisplayProps) {
 
 type LinkDisplayProps = {
     link: LinkObject;
+    isHidden: boolean;
     // linkCheckResult: string | null;
 }
 
-function LinkDisplay({ link }: LinkDisplayProps ) {
+function LinkDisplay({ link, isHidden }: LinkDisplayProps ) {
     return (
-        <View padding={'size-100'}>
+        <View padding={'size-100'} isHidden={!isHidden}>
             <Grid columns={['1fr']} >
                 <Text>{link.text}</Text>
                 <Text>Found in: <Badge variant='neutral'>{getReadableType(link.parentResourceType)}</Badge> {link.parentResourceTitle}</Text>
