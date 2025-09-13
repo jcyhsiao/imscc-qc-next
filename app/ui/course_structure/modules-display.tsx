@@ -1,5 +1,5 @@
 import { Module, ModuleItem } from '@/app/lib/definitions';
-import { getReadableType } from '@/app/lib/file-handling';
+import { getReadableType } from '@/app/lib/imscc-handling';
 import { QC_BADGES, getIconForItemType } from '@/app/ui/helpers';
 // import { useId } from 'react';
 import { Text, Grid } from '@adobe/react-spectrum';
@@ -19,7 +19,7 @@ export interface ModuleItem {
 
 export function ModulesDisplay({ modules }: { modules: Module[] }) {
     return (
-        <Accordion width='95vw'>
+        <Accordion margin='auto' width='90vw'>
             {modules.map(module =>
                 <Disclosure id={module.title} key={module.identifier}>
                     <DisclosureTitle>

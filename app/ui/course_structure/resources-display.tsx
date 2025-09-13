@@ -1,6 +1,6 @@
 import { Resource } from '@/app/lib/definitions';
 import { Accordion, Disclosure, DisclosureTitle, DisclosurePanel, Badge, Grid, Flex, View, Text } from '@adobe/react-spectrum';
-import { getReadableType } from '@/app/lib/file-handling';
+import { getReadableType } from '@/app/lib/imscc-handling';
 
 
 export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
@@ -15,7 +15,7 @@ export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
         <View>
             <Text>Note: this does not currently list raw links in modules, including external tools</Text>
         </View>
-            <Accordion width='95vw'>
+            <Accordion margin='auto' width='90vw'>
                 {
                     Object.entries(groupedByType).map(([type, items]) => (
                         <Disclosure id={type} key={type}>

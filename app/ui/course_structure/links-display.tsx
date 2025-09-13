@@ -1,7 +1,7 @@
 import { LinkObject } from '@/app/lib/definitions';
 import { Checkbox, Flex, CheckboxGroup, Badge, Grid, Text, View } from '@adobe/react-spectrum';
 // import { Accordion, Disclosure, DisclosureTitle, DisclosurePanel } from '@adobe/react-spectrum';
-import { getReadableType } from '@/app/lib/file-handling';
+import { getReadableType } from '@/app/lib/imscc-handling';
 import { capitalize } from '@/app/ui/helpers';
 import { useState } from 'react';
 
@@ -11,6 +11,18 @@ type LinksDisplayProps = {
 }
 
 export function LinksDisplay({ links }: LinksDisplayProps) {
+    const allFoundLinkTypes = new Set(links.map(link => link.type.toString()));
+    const countsByTypes: {[key: string]: number} = {};
+    Array.from(allFoundLinkTypes).forEach(type => {
+        countsByTypes[type] = links.filter(link => link.type === type).length
+    });
+    const allFoundParentResourceTypes = new Set(links.map(link => link.parentResourceType));
+    const countsByParentResourceTypes: {[key: string]: number} = {};
+    Array.from(allFoundParentResourceTypes).forEach(type => {
+        countsByParentResourceTypes[type] = links.filter(link => link.parentResourceType === type).length;
+    });
+
+    /*
     const groupedByLinkType = links.reduce((acc, link) => {
         const linkType = link.type.toString();
         // This is kinda cool; if undefined, assign empty array, then push
@@ -24,11 +36,10 @@ export function LinksDisplay({ links }: LinksDisplayProps) {
         (acc[linkParentResourceType] = acc[linkParentResourceType] || []).push(link);
         return acc;
     }, {} as { [key: string]: LinkObject[] });
+    */
 
-    const [selectedLinkTypes, setSelectedLinkTypes] = useState(Object.keys(groupedByLinkType));
-    const [allFoundLinkTypes] = useState([...selectedLinkTypes]);
-    const [selectedParentResourceTypes, setSelectedParentResourceTypes] = useState(Object.keys(groupedByParentResourceType));
-    const [allFoundParentResourceTypes] = useState([...selectedParentResourceTypes]);
+    const [selectedLinkTypes, setSelectedLinkTypes] = useState([...allFoundLinkTypes]);
+    const [selectedParentResourceTypes, setSelectedParentResourceTypes] = useState([...allFoundParentResourceTypes]);
 
     return (
         <>
@@ -36,14 +47,14 @@ export function LinksDisplay({ links }: LinksDisplayProps) {
                 <Text>Note: currently, this only lists links in rich content, EXCLUDING those in quiz questions. Use the Canvas link checker for batch checks.</Text>
             </View>
             <Flex gap="size-300" wrap>
-                <CheckboxGroup label="Link Types" value={selectedLinkTypes} onChange={setSelectedLinkTypes}>
-                    {allFoundLinkTypes.map(type => (
-                        <Checkbox key={type} value={type}>{type === 'osu' ? type.toUpperCase() : capitalize(type)} ({groupedByLinkType[type]?.length || 0})</Checkbox>
+                <CheckboxGroup label="Link Types" name='link type' value={selectedLinkTypes} onChange={setSelectedLinkTypes}>
+                    {Array.from(allFoundLinkTypes).map(type => (
+                        <Checkbox key={type} value={type}>{type === 'osu' ? type.toUpperCase() : capitalize(type)} ({countsByTypes[type]})</Checkbox>
                     ))}
                 </CheckboxGroup>
-                <CheckboxGroup label="Found in Parent Resource" value={selectedParentResourceTypes} onChange={setSelectedParentResourceTypes}>
-                    {allFoundParentResourceTypes.map(type => (
-                        <Checkbox key={type} value={type}>{capitalize(type)} ({groupedByParentResourceType[type]?.length || 0})</Checkbox>
+                <CheckboxGroup label="Found in Parent Resource" name='parent resource type' value={selectedParentResourceTypes} onChange={setSelectedParentResourceTypes}>
+                    {Array.from(allFoundParentResourceTypes).map(type => (
+                        <Checkbox key={type} value={type}>{capitalize(type)} ({countsByParentResourceTypes[type]})</Checkbox>
                     ))}
                 </CheckboxGroup>
             </Flex>

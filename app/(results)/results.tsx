@@ -2,7 +2,7 @@ import { Heading, ProgressCircle, Text, Item, TabList, TabPanels, Tabs } from '@
 import { useEffect, useState } from 'react';
 import Alert from '@spectrum-icons/workflow/Alert';
 
-import { extractIMSCC, inventoryIMSCC, analyzeIMSCCForObjects, analyzeIMSCCRichContentForAccessibility } from '@/app/lib/file-handling';
+import { extractIMSCC, inventoryIMSCC, analyzeIMSCCForObjects, analyzeIMSCCRichContentForAccessibility } from '@/app/lib/imscc-handling';
 import { Resource, Module } from '@/app/lib/definitions';
 import { VideoObject, FileObject, LinkObject } from '@/app/lib/definitions';
 import { EnhancedAxeResults } from '@/app/lib/definitions';
@@ -10,6 +10,7 @@ import { EnhancedAxeResults } from '@/app/lib/definitions';
 import CourseStructureTab from '@/app/(results)/course-structure';
 import CourseResourcesTab from '@/app/(results)/course-resources';
 import CourseLinksTab from './course-links';
+import AccessibilityCheckTab from './accessibility-check';
 
 type Props = {
     selectedFile?: File | null;
@@ -28,7 +29,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
     const [, setAllVideos] = useState<VideoObject[]>([]);
     const [, setAllFiles] = useState<FileObject[]>([]);
     const [allLinks, setAllLinks] = useState<LinkObject[]>([]);
-    const [, setAllAccessibilityResults] = useState<EnhancedAxeResults | null>(null);
+    const [allAccessibilityResults, setAllAccessibilityResults] = useState<EnhancedAxeResults | null>(null);
 
     // Use useEffect to trigger the analysis when startAnalysis or selectedFile changes
     useEffect(() => {
@@ -69,7 +70,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
         };
 
         performAnalysis();
-    }, [isAnalyzing, setIsAnalyzing, selectedFile, isAnalysisComplete]);
+    }, [isAnalyzing, setIsAnalyzing,selectedFile, isAnalysisComplete]);
 
     return (
         <>
@@ -107,10 +108,10 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                                     <CourseStructureTab modules={allModules} />
                                 </Item>
                                 <Item key="rsc">
-                                    <CourseResourcesTab resources={allResources} / >
+                                    <CourseResourcesTab resources={allResources} />
                                 </Item>
                                 <Item key="ally">
-                                    Alea jacta est.
+                                    <AccessibilityCheckTab resources={allResources} results={allAccessibilityResults} />
                                 </Item>
                                 <Item key="links">
                                     <CourseLinksTab links={allLinks} />
