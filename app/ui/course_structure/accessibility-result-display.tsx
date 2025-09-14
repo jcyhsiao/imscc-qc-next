@@ -1,6 +1,6 @@
 import { EnhancedAxeResults, EnhancedAxeResult } from "@/app/lib/definitions";
 import { Well, Accordion, CheckboxGroup, Checkbox, Flex, Disclosure, Switch, DisclosureTitle, DisclosurePanel, Link, Text, View } from "@adobe/react-spectrum";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { capitalize } from "@/app/ui/helpers";
 
 type AccessibilityResultDisplayProps = {
@@ -11,67 +11,54 @@ type AccessibilityResultDisplayProps = {
 }
 
 export function AccessibilityResultsDisplay({ results }: { results: EnhancedAxeResults }) {
-    const allResultTypes = useMemo(() => {
-        const types: ('violations' | 'incomplete' | 'passes')[] = [];
-        if (results.violations.length > 0) types.push('violations');
-        if (results.incomplete.length > 0) types.push('incomplete');
-        if (results.passes.length > 0) types.push('passes');
-        return types;
-    }, [results.violations.length, results.incomplete.length, results.passes.length]); // Dependencies: lengths of the arrays
+    const allResultTypes: ('violations' | 'incomplete' | 'passes')[] = [];
+    if (results.violations.length > 0) allResultTypes.push('violations');
+    if (results.incomplete.length > 0) allResultTypes.push('incomplete');
+    if (results.passes.length > 0) allResultTypes.push('passes');
 
-    const combinedResults = useMemo(() => {
-        return [
-            ...results.violations,
-            ...results.incomplete,
-            ...results.passes,
-        ];
-    }, [results.violations, results.incomplete, results.passes]); // Dependencies: the arrays themselves
+    const combinedResults = [
+        ...results.violations,
+        ...results.incomplete,
+        ...results.passes,
+    ];
 
-
-const allParentResourceTypes = useMemo(() => {
-        return Array.from(new Set(combinedResults.map(result => result.parentItemType)));
-    }, [combinedResults]); // Dependency: combinedResults
+    const allParentResourceTypes = Array.from(new Set(combinedResults.map(result => result.parentItemType)));
 
     const [selectedResultTypes, setSelectedResultTypes] = useState(['violations']);
     const [selectedResourceTypes, setSelectedResourceTypes] = useState([...allParentResourceTypes]);
     const [showFromPublishedParentOnly, setShowFromPublishedParentOnly] = useState(false);
     const [showFromInModuleParentOnly, setShowFromInModuleParentOnly] = useState(false);
 
- const allResourcesInResults = useMemo(() => {
-        return Array.from(new Set(combinedResults.map(result => result.parentItemIdentifier)));
-    }, [combinedResults]); // Dependency: combinedResults
+    const allResourcesInResults = Array.from(new Set(combinedResults.map(result => result.parentItemIdentifier)));
 
-     const allResultsByResource = useMemo(() => {
-        const byResource: {
-            [key: string]:
-            {
-                resourceTitle: string;
-                parentModuleTitle: string;
-                resourceType: string;
-                resourceStatus: boolean;
-                results: EnhancedAxeResult[]
-            }
-        } = {};
-        allResourcesInResults.forEach(resourceIdentifier => {
-            const resourceResults = combinedResults.filter(result => result.parentItemIdentifier === resourceIdentifier);
-            if (resourceResults.length > 0) {
-                const firstResourceResult = resourceResults[0];
-                const resourceTitle = firstResourceResult.parentItemTitle;
-                const parentModuleTitle = firstResourceResult.parentItemModuleTitle;
-                const resourceType = firstResourceResult.parentItemType;
-                const resourceStatus = firstResourceResult.parentItemPublished;
+    const allResultsByResource: {
+        [key: string]:
+        {
+            resourceTitle: string;
+            parentModuleTitle: string;
+            resourceType: string;
+            resourceStatus: boolean;
+            results: EnhancedAxeResult[]
+        }
+    } = {};
+    allResourcesInResults.forEach(resourceIdentifier => {
+        const resourceResults = combinedResults.filter(result => result.parentItemIdentifier === resourceIdentifier);
+        if (resourceResults.length > 0) {
+            const firstResourceResult = resourceResults[0];
+            const resourceTitle = firstResourceResult.parentItemTitle;
+            const parentModuleTitle = firstResourceResult.parentItemModuleTitle;
+            const resourceType = firstResourceResult.parentItemType;
+            const resourceStatus = firstResourceResult.parentItemPublished;
 
-                byResource[resourceIdentifier] = {
-                    resourceTitle,
-                    parentModuleTitle,
-                    resourceType,
-                    resourceStatus,
-                    results: resourceResults
-                }
+            allResultsByResource[resourceIdentifier] = {
+                resourceTitle,
+                parentModuleTitle,
+                resourceType,
+                resourceStatus,
+                results: resourceResults
             }
-        });
-        return byResource;
-    }, [allResourcesInResults, combinedResults]); // Dependencies: allResourcesInResults, combinedResults
+        }
+    });
 
     return (
         <>
@@ -93,6 +80,7 @@ const allParentResourceTypes = useMemo(() => {
                 <Switch isSelected={showFromPublishedParentOnly} onChange={setShowFromPublishedParentOnly}>Show Published Items Only</Switch>
                 <Switch isSelected={showFromInModuleParentOnly} onChange={setShowFromInModuleParentOnly}>Show Items in Modules Only</Switch>
             </Flex>
+
             <Accordion>
                 {
                     Object.entries(allResultsByResource).map(([id, body]) => {
@@ -101,13 +89,12 @@ const allParentResourceTypes = useMemo(() => {
                             resultsCount += body.results.filter(result => result.type === type).length;
                         });
 
-
                         return (
                             <Disclosure id={id} key={id} isHidden={
                                 resultsCount === 0 ||
                                 !selectedResourceTypes.includes(body.resourceType) ||
-                                showFromPublishedParentOnly && !body.resourceStatus ||
-                                showFromInModuleParentOnly && body.parentModuleTitle === undefined
+                                (showFromPublishedParentOnly && !body.resourceStatus) ||
+                                (showFromInModuleParentOnly && body.parentModuleTitle === undefined)
                             }>
                                 <DisclosureTitle>
                                     {body.resourceTitle} {body.parentModuleTitle} {body.resourceType} {body.resourceStatus ? 'Published' : 'Unpublished'}

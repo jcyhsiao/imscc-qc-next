@@ -39,18 +39,12 @@ export async function extractIMSCC(
     }
 }
 
-/**
-  * Parse the imsmanifest and assemble course structure, content items, and then analyze.
-  * Preserves original behavior and logic.
-*/
-export async function inventoryIMSCC(
+export async function inventoryIMSCCManifest(
     parser: PlatformDOMParser,
-    fileContents: { [key: string]: string }): Promise<{modulesResults: Module[], resourcesResults: Resource[]}> {
+    fileContents: { [key: string]: string }): Promise<Resource[]> {
     if (parser === null) throw Error('inventoryIMSCC: parser is null.');
 
-    const inModuleResourceIdentifiers: Set<string> = new Set();
     const allResources: Resource[] = [];
-    const allModules: Module[] = [];
 
     // Map of resource items gathered from imsmanifest.xml
     const manifestFileContent = fileContents['imsmanifest.xml'];
@@ -61,7 +55,6 @@ export async function inventoryIMSCC(
     const manifestFileContentParsed = parser.parseFromString(manifestFileContent, "application/xml");
     const manifestSupportingResourceElements: string[] = [];
 
-    // updateProgress(90, 'Parsing manifest...');
 
     // Helper to find a manifest <resource> element by an identifier (e.g., its corresponding <item>'s identifierref)
     const findManifestResourceElementByIentifier = (id: string | null): Element | null => {
@@ -83,14 +76,16 @@ export async function inventoryIMSCC(
         if (
             // LTIs
             resourceType === 'imsbasiclti_xmlv1p3' ||
-            // Links in modules
+            // Links in modules (TODO: add support)
             resourceType === 'imswl_xmlv1p1' ||
-            // Question banks (for now)
+            // Question banks
             resourceHref?.includes('non_cc_assessments') ||
-            // Syllabus entry in manifest
+            // Syllabus entry in manifest (TODO: add support)
             resourceIdentifier.endsWith('_syllabus') ||
             // Course settings entry
-            resourceHref?.includes('canvas_export.txt')
+            resourceHref?.includes('canvas_export.txt') ||
+            // File
+            resourceType === 'webcontent' && resourceHref && resourceHref.startsWith('web_resources/')
         ) continue;
 
         let resourceStatus = false;
@@ -102,15 +97,12 @@ export async function inventoryIMSCC(
         const isQuizOrSurvey = resourceType.includes('imsqti_xmlv1p2/imscc_xmlv1p1/assessment');
         const isDiscussion = resourceType.includes('imsdt_xmlv1p1');
         const isPage = resourceType === 'webcontent' && resourceHref && resourceHref.startsWith('wiki_content/');
-        const isFile = resourceType === 'webcontent' && resourceHref && resourceHref.startsWith('web_resources/');
 
         let resourceClarifiedType: string | null = null;
         let resourceIdentifierRef: string | null = null;
 
         // TODO: A lot of refactoring opportunities here
-        if (isFile) {
-            resourceClarifiedType = 'file';
-        } else if (isPage) {
+       if (isPage) {
             resourceClarifiedType = 'page';
             const pageContent = fileContents[resourceHref];
             if (pageContent) {
@@ -200,9 +192,8 @@ export async function inventoryIMSCC(
             }
         }
 
-        if (!resourceClarifiedType || resourceClarifiedType === 'file') {
-            continue;
-        }
+        if (!resourceClarifiedType) continue;
+
         allResources.push({
             identifier: resourceIdentifier,
             title: resourceTitle,
@@ -212,8 +203,23 @@ export async function inventoryIMSCC(
             contentType: resourceType,
             analysisHref: resourceAnalysisHref,
             analysisType: resourceAnalysisType,
+            links: [],
+            videos: [],
+            files: [],
+            accessibilityResults: null
         });
     }
+
+    return allResources;
+}
+
+export async function inventoryIMSCCModules(
+    parser: PlatformDOMParser,
+    fileContents: { [key: string]: string }
+): Promise<Module[]> {
+    if (parser === null) throw Error('inventoryIMSCCModules: parser is null.');
+
+    const allModules: Module[] = [];
 
     // Gather modules and module contents
     const metaModuleFileContent = fileContents['course_settings/module_meta.xml'];
@@ -245,14 +251,6 @@ export async function inventoryIMSCC(
             const itemTitle = metaModuleItemElement.getElementsByTagName('title').length > 0 ? metaModuleItemElement.getElementsByTagName('title')[0].textContent! : 'ERROR: untitled item';
             // const moduleItemIdentifierRef = metaModuleItemElement.querySelector('identifierref')?.textContent || null;
             const moduleItemIdentifierRef = metaModuleItemElement.getElementsByTagName('identifierref').length > 0 ? metaModuleItemElement.getElementsByTagName('identifierref')[0].textContent || null : null;
-            let itemClarifiedType = 'tbd';
-
-            const matchingResource = allResources.find(r => r.identifier === moduleItemIdentifierRef);
-
-            if (matchingResource) {
-                itemClarifiedType = matchingResource?.clarifiedType || itemContentType;
-                matchingResource.moduleTitle = moduleTitle;
-            }
 
             const moduleItem: ModuleItem = {
                 identifier: moduleItemIdentifier,
@@ -261,13 +259,11 @@ export async function inventoryIMSCC(
                 moduleTitle: moduleTitle,
                 published: itemStatus,
                 indent: itemIndent,
-                clarifiedType: itemClarifiedType,
+                clarifiedType: 'tbd',
                 contentType: itemContentType
             };
 
             moduleItems.push(moduleItem);
-            // Building our list of in-module items
-            inModuleResourceIdentifiers.add(moduleItemIdentifier);
         });
 
         const moduleObj = {
@@ -281,24 +277,83 @@ export async function inventoryIMSCC(
         allModules.push(moduleObj);
     });
 
-    return {modulesResults: allModules, resourcesResults: allResources};
+    return allModules;
+}
 
-    /*
-    displayModules(allModules);
-          displayCourseContent(allResources);
+export function reconcileIMSCCModulesAndResources(
+    allModules: Module[],
+    allResources: Resource[]
+) {
+    const reconciledModules: Module[] = [...allModules];
+    const reconciledResources: Resource[] = [...allResources];
 
-          updateProgress(95, 'Analyzing course content...');
-          await analyzeContent(fileContents, allResources);
+    reconciledModules.forEach(module => {
+        module.items.forEach(item => {
+            const matchingResource = reconciledResources.find(r => r.identifier === item.identifierRef);
 
-          updateProgress(100, 'Analysis complete!');
-          */
+            if (matchingResource) {
+                item.clarifiedType = matchingResource?.clarifiedType || item.contentType;
+                matchingResource.moduleTitle = item.moduleTitle;
+            }
+        })
+    });
+
+    allModules = reconciledModules;
+    allResources = reconciledResources;
+}
+
+/*
+         // Building our list of in-module items. TODO: Utilize this
+            inModuleResourceIdentifiers.add(moduleItemIdentifier);
+            */
+
+/**
+        * Analyze provided items: extract links/files/videos and run accessibility checks.
+        * items - items to analyze (with href and analysisType)
+        */
+export async function identifyObjectsInIMSCCResources(parser: PlatformDOMParser, resources: Resource[], fileContents: { [key: string]: string }) {
+    if (parser === null) throw Error('analyzeIMSCCContent: parser is null.');
+
+    for (const resource of resources) {
+        if (!resource.analysisHref) continue
+
+        const fileContent = fileContents[resource.analysisHref];
+        if (!fileContent) continue;
+
+        const allLinks: LinkObject[] = [], allFiles: FileObject[] = [], allVideos: VideoObject[] = [];
+
+        let richContent: Document;
+        if (resource.analysisType === 'xml') {
+            const xmlDoc = parser.parseFromString(fileContent, "application/xml");
+            // const description = xmlDoc.querySelector("description");
+            const description = xmlDoc.getElementsByTagName('description').length > 0 ? xmlDoc.getElementsByTagName('description')[0] : null;
+            const htmlContent = description ? description.textContent : '';
+            richContent = parser.parseFromString(htmlContent, "text/html");
+        } else if (resource.analysisType === 'discussion_xml') {
+            const xmlDoc = parser.parseFromString(fileContent, "application/xml");
+            // const text = xmlDoc.querySelector("text");
+            const text = xmlDoc.getElementsByTagName('text').length > 0 ? xmlDoc.getElementsByTagName('text')[0] : null;
+            const htmlContent = text ? text.textContent : '';
+            richContent = parser.parseFromString(htmlContent, "text/html");
+        } else {
+            richContent = parser.parseFromString(fileContent, "text/html");
+        }
+
+        allLinks.push(...findLinks(richContent, resource));
+        allFiles.push(...findFileAttachments(richContent, resource));
+        allVideos.push(...findVideos(richContent, resource));
+
+        resource.links = allLinks;
+        resource.files = allFiles;
+        resource.videos = allVideos;
+    }
 }
 
 /**
         * Analyze provided items: extract links/files/videos and run accessibility checks.
         * items - items to analyze (with href and analysisType)
         */
-export async function analyzeIMSCCForObjects(parser: PlatformDOMParser, fileContents: { [key: string]: string }, items: Resource[]): Promise<{videosResults: VideoObject[], filesResults: FileObject[], linksResults: LinkObject[]}> {
+export async function retire_analyzeIMSCCForObjects(parser: PlatformDOMParser, fileContents: { [key: string]: string }, items: Resource[]): Promise<{ videosResults: VideoObject[], filesResults: FileObject[], linksResults: LinkObject[] }> {
     if (parser === null) throw Error('analyzeIMSCCContent: parser is null.');
 
     const allLinks: LinkObject[] = [], allFiles: FileObject[] = [], allVideos: VideoObject[] = [];
@@ -331,19 +386,88 @@ export async function analyzeIMSCCForObjects(parser: PlatformDOMParser, fileCont
         allVideos.push(...findVideos(richContent, item));
     }
 
-    return {videosResults: allVideos, filesResults: allFiles, linksResults: allLinks};
-
-    // await runAndDisplayAccessibilityChecks(items, fileContents);
-    // await checkAndDisplayLinks(allLinks);
-    // displayFileAttachments(allFiles);
-    // displayVideos(allVideos);
+    return { videosResults: allVideos, filesResults: allFiles, linksResults: allLinks };
 }
 
 /**
          * Run axe accessibility checks on items and prepare data for the accessibility tab.
          */
-export async function analyzeIMSCCRichContentForAccessibility(parser: PlatformDOMParser, items: Resource[], fileContents: { [key: string]: string }): Promise<EnhancedAxeResults>
- {
+export async function checkIMSCCResourcesForAccessibility(parser: PlatformDOMParser, resources: Resource[], fileContents: { [key: string]: string }) {
+    if (parser === null) throw Error('analyzeIMSCCRichContentForAccessibility: parser is null.');
+
+
+    for (const resource of resources) {
+        if (!resource.analysisHref) continue;
+        const content = fileContents[resource.analysisHref];
+        if (!content) continue;
+
+        let allResults: EnhancedAxeResults | null = null;
+
+        let doc: Document;
+
+        if (resource.analysisType === 'xml') {
+            const xmlDoc = parser.parseFromString(content, "application/xml");
+            // const description = xmlDoc.querySelector("description");
+            const description = xmlDoc.getElementsByTagName('description').length > 0 ? xmlDoc.getElementsByTagName('description')[0] : null;
+            const htmlContent = description ? description.textContent : '';
+            doc = parser.parseFromString(htmlContent, "text/html");
+        } else if (resource.analysisType === 'discussion_xml') {
+            const xmlDoc = parser.parseFromString(content, "application/xml");
+            // const text = xmlDoc.querySelector("text");
+            const text = xmlDoc.getElementsByTagName('text').length > 0 ? xmlDoc.getElementsByTagName('text')[0] : null;
+            const htmlContent = text ? text.textContent : '';
+            doc = parser.parseFromString(htmlContent, "text/html");
+        } else {
+            doc = parser.parseFromString(content, "text/html");
+        }
+
+        if (doc.body && doc.body.innerHTML.trim() !== '') {
+            try {
+                if (doc.body.querySelectorAll('*').length > 0) {
+                    const axeOptions = {
+                        preload: false,
+                        runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'],
+                    };
+                    const results = await axe.run(doc.body.querySelectorAll('*'), axeOptions);
+
+                    const addMetadata = (type: string, issue: Axe.Result) => ({
+                        ...issue,
+                        type,
+                        parentItemIdentifier: resource.identifier,
+                        parentItemTitle: resource.title,
+                        parentItemType: getReadableType(resource.clarifiedType) || 'ERROR: unknown type',
+                        parentItemPublished: resource.published,
+                        parentItemModuleTitle: resource.moduleTitle
+                    }) as EnhancedAxeResult;
+
+                    // If allResults hasn't been initialized yet, do so now
+                    if (allResults === null) allResults = {
+                        ...results,
+                        violations: [],
+                        passes: [],
+                        incomplete: [],
+                        inapplicable: []
+                    };
+
+                    allResults.violations.push(...results.violations.map(issue => addMetadata('violations', issue)));
+                    allResults.passes.push(...results.passes.map(issue => addMetadata('passes', issue)));
+                    allResults.incomplete.push(...results.incomplete.map(issue => addMetadata('incomplete', issue)));
+                    allResults.inapplicable.push(...results.inapplicable.map(issue => addMetadata('inapplicable', issue)));
+
+                    if (!allResults) throw Error('analyzeIMSCCRichContentForAccessibility: allResults should NOT be null.');
+                    resource.accessibilityResults = allResults;
+                }
+            } catch (e) {
+                console.warn(`Accessibility scan skipped for ${resource.title}: ${(e as Error).message}`);
+            }
+        }
+    }
+}
+
+/**
+         * Run axe accessibility checks on items and prepare data for the accessibility tab.
+         */
+export async function retire_analyzeIMSCCRichContentForAccessibility(parser: PlatformDOMParser, items: Resource[], fileContents: { [key: string]: string }): Promise<EnhancedAxeResults> {
     if (parser === null) throw Error('analyzeIMSCCRichContentForAccessibility: parser is null.');
 
     let allResults: EnhancedAxeResults | null = null;
@@ -412,8 +536,6 @@ export async function analyzeIMSCCRichContentForAccessibility(parser: PlatformDO
 
     if (!allResults) throw Error('analyzeIMSCCRichContentForAccessibility: allResults should NOT be null.');
     return allResults;
-
-    // setupAccessibilityTab(accessibilityData, items);
 }
 
 /* =========================================================================
@@ -423,7 +545,6 @@ export async function analyzeIMSCCRichContentForAccessibility(parser: PlatformDO
 /**
  * Find external links in a document and return structured items.
  */
-// TODO: Fix formatting issues
 function findLinks(doc: Document, item: Resource): LinkObject[] {
 
     const links: LinkObject[] = [];
@@ -441,7 +562,15 @@ function findLinks(doc: Document, item: Resource): LinkObject[] {
             } else {
                 type = 'external'
             }
-            links.push({ url: href, text: a.textContent.trim(), parentResourceIdentifier: item.identifier, parentResourceTitle: item.title, parentResourceType: item.clarifiedType, type: type as LinkType });
+            links.push({
+                url: href,
+                text: a.textContent.trim(),
+                parentResourceIdentifier: item.identifier,
+                parentResourceStatus: item.published,
+                parentResourceTitle: item.title,
+                parentResourceType: item.clarifiedType || item.contentType,
+                type: type as LinkType
+            });
         }
     });
     return links;
@@ -460,7 +589,7 @@ function findFileAttachments(doc: Document, item: Resource): FileObject[] {
     aElements.forEach(a => {
         files.push({
             parentAnchorText: a.textContent.trim(),
-            parentResourceType: item.clarifiedType,
+            parentResourceType: item.clarifiedType || item.contentType,
             parentResourceModuleTitle: item.moduleTitle === undefined ? '(None)' : item.moduleTitle,
             parentResourceTitle: item.title, href: (a as HTMLAnchorElement).href
         });
@@ -556,7 +685,9 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
     return videos;
 }
 
-export function getReadableType(type: string): string | null {
+export function getReadableType(type: string | undefined): string | null {
+    if (type === undefined) return null;
+
     switch (type) {
         case 'contextmodulesubheader':
             return 'Header';

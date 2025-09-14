@@ -2,7 +2,7 @@ import { Heading, ProgressCircle, Text, Item, TabList, TabPanels, Tabs } from '@
 import { useEffect, useState } from 'react';
 import Alert from '@spectrum-icons/workflow/Alert';
 
-import { extractIMSCC, inventoryIMSCC, analyzeIMSCCForObjects, analyzeIMSCCRichContentForAccessibility } from '@/app/lib/imscc-handling';
+import { extractIMSCC, retire_analyzeIMSCCForObjects, retire_analyzeIMSCCRichContentForAccessibility, inventoryIMSCCModules, inventoryIMSCCManifest, reconcileIMSCCModulesAndResources, identifyObjectsInIMSCCResources, checkIMSCCResourcesForAccessibility } from '@/app/lib/imscc-handling';
 import { Resource, Module } from '@/app/lib/definitions';
 import { VideoObject, FileObject, LinkObject } from '@/app/lib/definitions';
 import { EnhancedAxeResults } from '@/app/lib/definitions';
@@ -48,17 +48,28 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
 
                 const fileContentsResults = await extractIMSCC(selectedFile);
                 setAllFileContents(fileContentsResults);
-                const { modulesResults, resourcesResults } = await inventoryIMSCC(domParser, fileContentsResults);
+                // const { modulesResults, resourcesResults } = await retire_inventoryIMSCC(domParser, fileContentsResults);
+                const modulesResults = await inventoryIMSCCModules(domParser, fileContentsResults);
+                const resourcesResults = await inventoryIMSCCManifest(domParser, fileContentsResults);
+                reconcileIMSCCModulesAndResources(modulesResults, resourcesResults);
                 setAllModules(modulesResults);
-                setAllResources(resourcesResults);
 
-                const { videosResults, filesResults, linksResults } = await analyzeIMSCCForObjects(domParser, fileContentsResults, resourcesResults);
+                // TODO: Retire
+                const { videosResults, filesResults, linksResults } = await retire_analyzeIMSCCForObjects(domParser, fileContentsResults, resourcesResults);
                 setAllVideos(videosResults);
                 setAllFiles(filesResults);
                 setAllLinks(linksResults);
 
-                const accessibilityResults = await analyzeIMSCCRichContentForAccessibility(domParser, resourcesResults, fileContentsResults);
+                await identifyObjectsInIMSCCResources(domParser, resourcesResults, fileContentsResults);
+
+                // TODO: Retire
+                const accessibilityResults = await retire_analyzeIMSCCRichContentForAccessibility(domParser, resourcesResults, fileContentsResults);
                 setAllAccessibilityResults(accessibilityResults);
+
+                await checkIMSCCResourcesForAccessibility(domParser, resourcesResults, fileContentsResults);
+                setAllResources(resourcesResults);
+
+                console.log(resourcesResults);
 
                 setIsAnalyzing(false);
                 setIsAnalysisComplete(true);
@@ -116,7 +127,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                                     : <AccessibilityCheckTab results={allAccessibilityResults!} />}
                                 </Item>
                                 <Item key="links">
-                                    <CourseLinksTab links={allLinks} />
+                                    <CourseLinksTab resources={allResources} />
                                 </Item>
                                 <Item key="files">
                                     Alea jacta est.

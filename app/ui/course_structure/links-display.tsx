@@ -1,62 +1,42 @@
-import { LinkObject } from '@/app/lib/definitions';
-import { Checkbox, Flex, CheckboxGroup, Badge, Grid, Text, View } from '@adobe/react-spectrum';
+import { LinkObject, Resource } from '@/app/lib/definitions';
+import { Accordion, Disclosure, DisclosureTitle, DisclosurePanel, Checkbox, Flex, CheckboxGroup, Badge, Grid, Text, View, Switch } from '@adobe/react-spectrum';
 // import { Accordion, Disclosure, DisclosureTitle, DisclosurePanel } from '@adobe/react-spectrum';
 import { getReadableType } from '@/app/lib/imscc-handling';
-import { capitalize } from '@/app/ui/helpers';
-import { useMemo, useState } from 'react';
+import { capitalize, QC_BADGES } from '@/app/ui/helpers';
+import { useState } from 'react';
 
 type LinksDisplayProps = {
-    links: LinkObject[];
-    // linkCheckResults: { [key: string]: string};
+    resources: Resource[];
 }
 
-export function LinksDisplay({ links }: LinksDisplayProps) {
-const allFoundLinkTypes = useMemo(() => {
-        return new Set(links.map(link => link.type.toString()));
-    }, [links]); // Dependency: links
+export function LinksDisplay({ resources }: LinksDisplayProps) {
+    const allFoundLinks: LinkObject[] = [];
+    resources.forEach(resource => {
+        allFoundLinks.push(...resource.links)
+    });
 
-    const countsByTypes = useMemo(() => {
-        const counts: { [key: string]: number } = {};
-        Array.from(allFoundLinkTypes).forEach(type => {
-            counts[type] = links.filter(link => link.type.toString() === type).length;
-        });
-        return counts;
-    }, [links, allFoundLinkTypes]); // Dependencies: links, allFoundLinkTypes
+    const allFoundLinkTypes = new Set(allFoundLinks.map(link => link.type.toString()));
 
-     const allFoundParentResourceTypes = useMemo(() => {
-        return new Set(links.map(link => link.parentResourceType));
-    }, [links]); // Dependency: links
+    const countsByTypes: { [key: string]: number } = {};
+    Array.from(allFoundLinkTypes).forEach(type => {
+        countsByTypes[type] = allFoundLinks.filter(link => link.type.toString() === type).length;
+    });
 
-    const countsByParentResourceTypes = useMemo(() => {
-        const counts: { [key: string]: number } = {};
-        Array.from(allFoundParentResourceTypes).forEach(type => {
-            counts[type] = links.filter(link => link.parentResourceType === type).length;
-        });
-        return counts;
-    }, [links, allFoundParentResourceTypes]); // Dependencies: links, allFoundParentResourceTypes
+    const allResourcesWithLinks = resources.filter(resource => resource.links.length > 0);
+    const allFoundParentResourceTypes = new Set(allResourcesWithLinks.map(resource => resource.clarifiedType || 'tbd'));
 
-    /*
-    const groupedByLinkType = links.reduce((acc, link) => {
-        const linkType = link.type.toString();
-        // This is kinda cool; if undefined, assign empty array, then push
-        (acc[linkType] = acc[linkType] || []).push(link);
-        return acc;
-    }, {} as { [key: string]: LinkObject[] });
-
-    const groupedByParentResourceType = links.reduce((acc, link) => {
-        const linkParentResourceType = link.parentResourceType;
-        // This is kinda cool; if undefined, assign empty array, then push
-        (acc[linkParentResourceType] = acc[linkParentResourceType] || []).push(link);
-        return acc;
-    }, {} as { [key: string]: LinkObject[] });
-    */
+    const countsByParentResourceTypes: { [key: string]: number } = {};
+    Array.from(allFoundParentResourceTypes).forEach(type => {
+        countsByParentResourceTypes[type] = allFoundLinks.filter(link => link.parentResourceType === type).length;
+    });
 
     const [selectedLinkTypes, setSelectedLinkTypes] = useState([...allFoundLinkTypes]);
     const [selectedParentResourceTypes, setSelectedParentResourceTypes] = useState([...allFoundParentResourceTypes]);
+    const [showFromPublishedParentOnly, setShowFromPublishedParentOnly] = useState(false);
 
     return (
         <>
-        <View>
+            <View>
                 <Text>Note: currently, this only lists links in rich content, EXCLUDING those in quiz questions. Use the Canvas link checker for batch checks.</Text>
             </View>
             <Flex gap="size-300" wrap>
@@ -70,37 +50,44 @@ const allFoundLinkTypes = useMemo(() => {
                         <Checkbox key={type} value={type}>{capitalize(type)} ({countsByParentResourceTypes[type]})</Checkbox>
                     ))}
                 </CheckboxGroup>
+                <Switch isSelected={showFromPublishedParentOnly} onChange={setShowFromPublishedParentOnly}>Show Published Items Only</Switch>
             </Flex>
-
-            <View>
+            <Accordion>
                 {
-                    links.sort((a, b) => a.parentResourceTitle.localeCompare(b.parentResourceTitle)).map(link => (
-                        // (link.type in selectedLinkTypes) && (link.parentResourceType in selectedParentResourceTypes) &&
-
-                        // <LinkDisplay key={`${link.text}-rand${Math.random() * 1000}`} link={link} linkCheckResult={linkCheckResults[link.url] || null} />
-                        <LinkDisplay key={`${link.text}-rand${Math.random() * 1000}`} link={link} isHidden={
+                    allResourcesWithLinks.sort((a, b) => a.title.localeCompare(b.title)).map(resource => {
+                        let filteredLinksCount = 0;
+                        filteredLinksCount += resource.links.filter(link =>
                             selectedLinkTypes.includes(link.type.toString())
-                            && selectedParentResourceTypes.includes(link.parentResourceType)
-                        } />
-                    ))
+                        ).length;
+
+                        return (
+                            <Disclosure id={resource.identifier} key={resource.identifier} isHidden={
+                                filteredLinksCount == 0 ||
+                                (resource.clarifiedType !== undefined &&!selectedParentResourceTypes.includes(resource.clarifiedType)) ||
+                                (showFromPublishedParentOnly && !resource.published)}>
+                                <DisclosureTitle>{resource.title} {resource.clarifiedType} {resource.published ? 'Published' : 'Unpublished'}</DisclosureTitle>
+                                <DisclosurePanel>
+                                    {
+                                        resource.links.map(link =>
+                                        (
+                                            <LinkDisplay key={`${link.text}-rand${Math.random() * 1000}`} link={link} isHidden={
+                                                !selectedLinkTypes.includes(link.type.toString()) ||
+                                                !selectedParentResourceTypes.includes(link.parentResourceType)} />
+                                        )
+                                        )
+                                    }
+                                </DisclosurePanel>
+                            </Disclosure>
+                        )
+                    })
                 }
-            </View>
+            </Accordion>
+
         </>
     );
 }
 
-/*
-                    Object.entries(groupedByLinkType).map(([type, links]) => (
-                        <Disclosure id={type} key={type}>
-                            <DisclosureTitle>{type === 'osu' ? type.toUpperCase() : capitalize(type)} ({links.length})</DisclosureTitle>
-                            <DisclosurePanel>
-                                {links.sort((a, b) => getReadableType(a.parentResourceType)?.localeCompare(getReadableType(b.parentResourceType) || '') || a.parentResourceTitle.localeCompare(b.parentResourceTitle)).map(link => (
-                                    <LinkDisplay key={`${link.text}${Math.random() * 1000}`} link={link} linkCheckResult={linkCheckResults[link.url] || null} />
-                                ))}
-                            </DisclosurePanel>
-                        </Disclosure>
-                    ))
-                        */
+
 
 type LinkDisplayProps = {
     link: LinkObject;
@@ -108,15 +95,33 @@ type LinkDisplayProps = {
     // linkCheckResult: string | null;
 }
 
-function LinkDisplay({ link, isHidden }: LinkDisplayProps ) {
+function LinkDisplay({ link, isHidden }: LinkDisplayProps) {
     return (
-        <View padding={'size-100'} isHidden={!isHidden}>
-            <Grid columns={['1fr']} >
+        <View borderWidth='thin' borderColor='dark' borderRadius='medium' padding='size-250' marginBottom='size-100' isHidden={isHidden}>
+            <Grid columns={['1fr']} gap='size-50' >
                 <Text>{link.text}</Text>
-                <Text>Found in: <Badge variant='neutral'>{getReadableType(link.parentResourceType)}</Badge> {link.parentResourceTitle}</Text>
-                <Text>Target: {link.url}</Text>
+                <Text>Found in: {link.parentResourceTitle} <Badge variant='neutral'>{getReadableType(link.parentResourceType)}</Badge></Text>
+                <Text>Target: {link.url} {QC_BADGES.linkType[link.type]}</Text>
                 {/* <Text>Link status: {linkCheckResult ? '' : linkCheckResult}</Text> */}
             </Grid>
         </View>
     )
 }
+
+// Cool code
+
+/*
+const groupedByLinkType = links.reduce((acc, link) => {
+    const linkType = link.type.toString();
+    // This is kinda cool; if undefined, assign empty array, then push
+    (acc[linkType] = acc[linkType] || []).push(link);
+    return acc;
+}, {} as { [key: string]: LinkObject[] });
+
+const groupedByParentResourceType = links.reduce((acc, link) => {
+    const linkParentResourceType = link.parentResourceType;
+    // This is kinda cool; if undefined, assign empty array, then push
+    (acc[linkParentResourceType] = acc[linkParentResourceType] || []).push(link);
+    return acc;
+}, {} as { [key: string]: LinkObject[] });
+*/

@@ -7,10 +7,14 @@ export interface Resource {
     identifierref: string | null,
     href?: string,
     published: boolean,
-    clarifiedType: string,
+    clarifiedType?: string,
     contentType: string,
     analysisHref: string | null,
     analysisType: string | null
+    links: LinkObject[],
+    videos: VideoObject[],
+    files: FileObject[],
+    accessibilityResults: EnhancedAxeResults | null,
 };
 
 export interface Module {
@@ -54,6 +58,7 @@ export type LinkType = LINK_TYPES[number];
 export interface LinkObject {
     url: string;
     text: string;
+    parentResourceStatus: boolean;
     parentResourceIdentifier: string;
     parentResourceTitle: string;
     parentResourceType: string;

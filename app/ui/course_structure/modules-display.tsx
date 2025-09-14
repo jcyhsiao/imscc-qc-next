@@ -1,21 +1,8 @@
 import { Module, ModuleItem } from '@/app/lib/definitions';
 import { getReadableType } from '@/app/lib/imscc-handling';
 import { QC_BADGES, getIconForItemType } from '@/app/ui/helpers';
-// import { useId } from 'react';
 import { Text, Grid } from '@adobe/react-spectrum';
 import { Accordion, Badge, Disclosure, DisclosureTitle, DisclosurePanel, Flex, View } from '@adobe/react-spectrum'
-/*
-export interface ModuleItem {
-    identifier: string,
-    title: string,
-    identifierRef: string | null,
-    moduleTitle: string,
-    status: string,
-    indent: number,
-    clarifiedType: string,
-    contentType: string,
-}
-*/
 
 export function ModulesDisplay({ modules }: { modules: Module[] }) {
     return (
