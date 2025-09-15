@@ -65,6 +65,9 @@ export interface LinkObject {
     type: LinkType;
 };
 
+type ACCESSIBILITY_RESULT_TYPES = ['violations', 'passes', 'incomplete'];
+export type AccessibilityResultType = ACCESSIBILITY_RESULT_TYPES[number];
+
 export type EnhancedAxeResult = Axe.Result & {
     type: string,
     parentItemIdentifier: string,

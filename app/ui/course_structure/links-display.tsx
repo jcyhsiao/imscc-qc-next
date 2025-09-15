@@ -1,12 +1,17 @@
 import { LinkObject, Resource } from '@/app/lib/definitions';
 import { Accordion, Disclosure, DisclosureTitle, DisclosurePanel, Checkbox, Flex, CheckboxGroup, Badge, Grid, Text, View, Switch } from '@adobe/react-spectrum';
 // import { Accordion, Disclosure, DisclosureTitle, DisclosurePanel } from '@adobe/react-spectrum';
-import { getReadableType } from '@/app/lib/imscc-handling';
 import { capitalize, QC_BADGES } from '@/app/ui/helpers';
 import { useState } from 'react';
 
 type LinksDisplayProps = {
     resources: Resource[];
+}
+
+const isOSULibrariesLink = (link: LinkObject): boolean => {
+    return link.url.includes('library.osu.edu') ||
+        link.url.includes('library.ohio-state.edu') ||
+        link.url.includes('proxy.lib.ohio-state.edu')
 }
 
 export function LinksDisplay({ resources }: LinksDisplayProps) {
@@ -33,6 +38,7 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
     const [selectedLinkTypes, setSelectedLinkTypes] = useState([...allFoundLinkTypes]);
     const [selectedParentResourceTypes, setSelectedParentResourceTypes] = useState([...allFoundParentResourceTypes]);
     const [showFromPublishedParentOnly, setShowFromPublishedParentOnly] = useState(false);
+    const [showOSULibrariesLinksOnly, setShowOSULibrariesLinksOnly] = useState(false);
 
     return (
         <>
@@ -51,6 +57,7 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
                     ))}
                 </CheckboxGroup>
                 <Switch isSelected={showFromPublishedParentOnly} onChange={setShowFromPublishedParentOnly}>Show Published Items Only</Switch>
+                <Switch isSelected={showOSULibrariesLinksOnly} onChange={setShowOSULibrariesLinksOnly}>Show OSU Libraries Links</Switch>
             </Flex>
             <Accordion>
                 {
@@ -59,22 +66,36 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
                         filteredLinksCount += resource.links.filter(link =>
                             selectedLinkTypes.includes(link.type.toString())
                         ).length;
+                        if (selectedLinkTypes.includes('osu') && showOSULibrariesLinksOnly) {
+                            filteredLinksCount -= resource.links.filter(link =>
+                                link.type === 'osu'
+                                && !isOSULibrariesLink(link)).length;
+                        }
 
                         return (
                             <Disclosure id={resource.identifier} key={resource.identifier} isHidden={
                                 filteredLinksCount == 0 ||
-                                (resource.clarifiedType !== undefined &&!selectedParentResourceTypes.includes(resource.clarifiedType)) ||
+                                (resource.clarifiedType !== undefined && !selectedParentResourceTypes.includes(resource.clarifiedType)) ||
                                 (showFromPublishedParentOnly && !resource.published)}>
-                                <DisclosureTitle>{resource.title} {resource.clarifiedType} {resource.published ? 'Published' : 'Unpublished'}</DisclosureTitle>
+                                <DisclosureTitle>
+                                    <Grid columns={['5fr', '1fr']} gap='size-100' width='90vw'>
+                                        <Text>{resource.title}</Text>
+                                        <Flex gap='size-100' justifyContent='end'>
+                                            <Badge variant='neutral'>{capitalize(resource.clarifiedType!)}</Badge>
+                                            {resource.published ? QC_BADGES.publishStatus.published : QC_BADGES.publishStatus.unpublished}
+                                        </Flex>
+                                    </Grid>
+                                </DisclosureTitle>
                                 <DisclosurePanel>
                                     {
                                         resource.links.map(link =>
                                         (
                                             <LinkDisplay key={`${link.text}-rand${Math.random() * 1000}`} link={link} isHidden={
                                                 !selectedLinkTypes.includes(link.type.toString()) ||
+                                                (selectedLinkTypes.includes('osu') && showOSULibrariesLinksOnly && !isOSULibrariesLink(link)) ||
                                                 !selectedParentResourceTypes.includes(link.parentResourceType)} />
-                                        )
-                                        )
+                                    )
+                                    )
                                     }
                                 </DisclosurePanel>
                             </Disclosure>
@@ -100,8 +121,7 @@ function LinkDisplay({ link, isHidden }: LinkDisplayProps) {
         <View borderWidth='thin' borderColor='dark' borderRadius='medium' padding='size-250' marginBottom='size-100' isHidden={isHidden}>
             <Grid columns={['1fr']} gap='size-50' >
                 <Text>{link.text}</Text>
-                <Text>Found in: {link.parentResourceTitle} <Badge variant='neutral'>{getReadableType(link.parentResourceType)}</Badge></Text>
-                <Text>Target: {link.url} {QC_BADGES.linkType[link.type]}</Text>
+                <Text>{QC_BADGES.linkType[link.type]} Target: {link.url}</Text>
                 {/* <Text>Link status: {linkCheckResult ? '' : linkCheckResult}</Text> */}
             </Grid>
         </View>

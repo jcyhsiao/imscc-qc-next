@@ -1,10 +1,9 @@
-import { Heading, ProgressCircle, Text, Item, TabList, TabPanels, Tabs } from '@adobe/react-spectrum';
+import { View, Heading, ProgressCircle, Text, Item, TabList, TabPanels, Tabs } from '@adobe/react-spectrum';
 import { useEffect, useState } from 'react';
 import Alert from '@spectrum-icons/workflow/Alert';
 
-import { extractIMSCC, retire_analyzeIMSCCForObjects, retire_analyzeIMSCCRichContentForAccessibility, inventoryIMSCCModules, inventoryIMSCCManifest, reconcileIMSCCModulesAndResources, identifyObjectsInIMSCCResources, checkIMSCCResourcesForAccessibility } from '@/app/lib/imscc-handling';
+import { extractIMSCC, retire_analyzeIMSCCRichContentForAccessibility, inventoryIMSCCModules, inventoryIMSCCManifest, reconcileIMSCCModulesAndResources, identifyObjectsInIMSCCResources, checkIMSCCResourcesForAccessibility } from '@/app/lib/imscc-handling';
 import { Resource, Module } from '@/app/lib/definitions';
-import { VideoObject, FileObject, LinkObject } from '@/app/lib/definitions';
 import { EnhancedAxeResults } from '@/app/lib/definitions';
 
 import CourseStructureTab from '@/app/(results)/course-structure';
@@ -26,9 +25,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
     const [, setAllFileContents] = useState<{ [key: string]: string }>({});
     const [allResources, setAllResources] = useState<Resource[]>([]);
     const [allModules, setAllModules] = useState<Module[]>([]);
-    const [, setAllVideos] = useState<VideoObject[]>([]);
-    const [, setAllFiles] = useState<FileObject[]>([]);
-    const [allLinks, setAllLinks] = useState<LinkObject[]>([]);
+
     const [allAccessibilityResults, setAllAccessibilityResults] = useState<EnhancedAxeResults | null>(null);
 
     // Use useEffect to trigger the analysis when startAnalysis or selectedFile changes
@@ -54,12 +51,6 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                 reconcileIMSCCModulesAndResources(modulesResults, resourcesResults);
                 setAllModules(modulesResults);
 
-                // TODO: Retire
-                const { videosResults, filesResults, linksResults } = await retire_analyzeIMSCCForObjects(domParser, fileContentsResults, resourcesResults);
-                setAllVideos(videosResults);
-                setAllFiles(filesResults);
-                setAllLinks(linksResults);
-
                 await identifyObjectsInIMSCCResources(domParser, resourcesResults, fileContentsResults);
 
                 // TODO: Retire
@@ -68,8 +59,6 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
 
                 await checkIMSCCResourcesForAccessibility(domParser, resourcesResults, fileContentsResults);
                 setAllResources(resourcesResults);
-
-                console.log(resourcesResults);
 
                 setIsAnalyzing(false);
                 setIsAnalysisComplete(true);
@@ -84,7 +73,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
     }, [isAnalyzing, setIsAnalyzing,selectedFile, isAnalysisComplete]);
 
     return (
-        <>
+        <View width='90vw'>
             <Heading level={2}>Results</Heading>
             {
                 selectedFile
@@ -124,7 +113,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                                 <Item key="ally">
                                     {allAccessibilityResults === null
                                     ? <Text>(No accessibility results found)</Text>
-                                    : <AccessibilityCheckTab results={allAccessibilityResults!} />}
+                                    : <AccessibilityCheckTab resources={allResources} />}
                                 </Item>
                                 <Item key="links">
                                     <CourseLinksTab resources={allResources} />
@@ -144,6 +133,6 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                     : <></>
             }
 
-        </>
+        </View>
     );
 }

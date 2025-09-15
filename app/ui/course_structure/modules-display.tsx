@@ -1,18 +1,18 @@
 import { Module, ModuleItem } from '@/app/lib/definitions';
 import { getReadableType } from '@/app/lib/imscc-handling';
-import { QC_BADGES, getIconForItemType } from '@/app/ui/helpers';
+import { QC_BADGES, getIconForItemType, capitalize } from '@/app/ui/helpers';
 import { Text, Grid } from '@adobe/react-spectrum';
 import { Accordion, Badge, Disclosure, DisclosureTitle, DisclosurePanel, Flex, View } from '@adobe/react-spectrum'
 
 export function ModulesDisplay({ modules }: { modules: Module[] }) {
     return (
-        <Accordion margin='auto' width='90vw'>
+        <Accordion>
             {modules.map(module =>
                 <Disclosure id={module.title} key={module.identifier}>
                     <DisclosureTitle>
-                        <Grid width='100vw' columns={['11fr', '1fr']}>
+                        <Grid columns={['11fr', '1fr']} width='90vw'>
                             <Text>{module.title}</Text>
-                            {module.published ? QC_BADGES.status.published : QC_BADGES.status.unpublished}
+                            {module.published ? QC_BADGES.publishStatus.published : QC_BADGES.publishStatus.unpublished}
                         </Grid>
                     </DisclosureTitle>
                     <DisclosurePanel>
@@ -34,12 +34,11 @@ export function ModuleItemDisplay({ item }: { item: ModuleItem }) {
     const itemClarifiedType = (item.clarifiedType != 'tbd' && item.clarifiedType != 'unspecified') ? item.clarifiedType : item.contentType;
     const itemReadableType = getReadableType(itemClarifiedType.toLowerCase());
     const itemStatusIndicator = item.published
-        ? QC_BADGES.status.published
-        : QC_BADGES.status.unpublished;
+        ? QC_BADGES.publishStatus.published
+        : QC_BADGES.publishStatus.unpublished;
 
     const itemIcon = getIconForItemType(itemClarifiedType.toLowerCase());
 
-    // TODO: Apply visual indentation (padding-left) so layout remains stable.
     return (
         <View padding={"size-100"} paddingStart={`${indentLevel * 1.5}rem`}>
             <Grid
@@ -48,7 +47,7 @@ export function ModuleItemDisplay({ item }: { item: ModuleItem }) {
                 {itemIcon}
                 <Text>{item.title}</Text>
                 <Flex gap='size-100' justifyContent='end'>
-                    <Badge variant="neutral">{itemReadableType}</Badge>
+                    <Badge variant="neutral">{capitalize(itemReadableType!)}</Badge>
                     {itemStatusIndicator}
 
                 </Flex>

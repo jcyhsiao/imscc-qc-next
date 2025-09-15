@@ -76,11 +76,13 @@ export async function inventoryIMSCCManifest(
         if (
             // LTIs
             resourceType === 'imsbasiclti_xmlv1p3' ||
-            // Links in modules (TODO: add support)
+            // Links in modules
+            // TODO: add support
             resourceType === 'imswl_xmlv1p1' ||
             // Question banks
             resourceHref?.includes('non_cc_assessments') ||
-            // Syllabus entry in manifest (TODO: add support)
+            // Syllabus entry in manifest
+            // TODO: add support
             resourceIdentifier.endsWith('_syllabus') ||
             // Course settings entry
             resourceHref?.includes('canvas_export.txt') ||
@@ -690,21 +692,21 @@ export function getReadableType(type: string | undefined): string | null {
 
     switch (type) {
         case 'contextmodulesubheader':
-            return 'Header';
+            return 'header';
         case 'assignment':
-            return 'Assignment';
+            return 'assignment';
         case 'page':
-            return 'Page';
+            return 'page';
         case 'externalurl':
-            return 'Link';
+            return 'link';
         case 'survey':
-            return 'Survey';
+            return 'survey';
         case 'quiz':
-            return 'Quiz';
+            return 'quiz';
         case 'announcement':
-            return 'Announcement';
+            return 'announcement';
         case 'discussion':
-            return 'Discussion';
+            return 'discussion';
         default:
             return null;
     }

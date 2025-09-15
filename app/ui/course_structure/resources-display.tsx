@@ -1,7 +1,7 @@
 import { Resource } from '@/app/lib/definitions';
 import { Accordion, Disclosure, DisclosureTitle, DisclosurePanel, Badge, Grid, Flex, View, Text } from '@adobe/react-spectrum';
 import { getReadableType } from '@/app/lib/imscc-handling';
-
+import { capitalize } from '@/app/ui/helpers';
 
 export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
     const groupedByType = resources.reduce((acc, item) => {
@@ -15,11 +15,11 @@ export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
         <View>
             <Text>Note: this does not currently list raw links in modules, including external tools</Text>
         </View>
-            <Accordion margin='auto' width='90vw'>
+            <Accordion>
                 {
                     Object.entries(groupedByType).map(([type, items]) => (
                         <Disclosure id={type} key={type}>
-                            <DisclosureTitle>{type} ({items.length})</DisclosureTitle>
+                            <DisclosureTitle>{capitalize(type)} ({items.length})</DisclosureTitle>
                             <DisclosurePanel>
                                 {items.sort((a, b) => a.title.localeCompare(b.title)).map(item => (
                                     <ResourceItemDisplay key={item.identifier} resource={item} />

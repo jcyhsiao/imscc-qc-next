@@ -1,17 +1,14 @@
-import { EnhancedAxeResults } from "../lib/definitions"
+import { Resource } from "../lib/definitions"
 import { AccessibilityResultsDisplay } from "@/app/ui/course_structure/accessibility-result-display";
 
 type Props = {
-    results: EnhancedAxeResults;
+    resources: Resource[];
 }
 
-export default function AccessibilityCheckTab({results}: Props) {
+export default function AccessibilityCheckTab({resources}: Props) {
 
     return (
-
-
-        <AccessibilityResultsDisplay results={results} />
-
+        <AccessibilityResultsDisplay resources={resources} />
     );
 }
 

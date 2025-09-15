@@ -4,22 +4,26 @@ import { JSX } from 'react';
 import { getReadableType } from '@/app/lib/imscc-handling'
 
 export const QC_BADGES = {
-    /*
-    impact: {
-        critical: createBadge('Critical', 'red'),
-        serious: createBadge('Serious', 'pink'),
-        moderate: createBadge('Moderate', 'yellow'),
-        minor: createBadge('Minor', 'blue'),
-        info: createBadge('Info'),
+    accessibilityResultType: {
+        passes: <Badge variant='positive'>Pass</Badge>,
+        violations: <Badge variant='negative'>Violation</Badge>,
+        incomplete: <Badge variant='info'>Investigate</Badge>,
+        inapplicable: <Badge variant='neutral'>Inapplicable</Badge>
     },
-    */
+    accessibilityViolationImpact: {
+        critical: <Badge variant='purple'>Critical</Badge>,
+        serious: <Badge variant='magenta'>Critical</Badge>,
+        moderate: <Badge variant='fuchsia'>Moderate</Badge>,
+        minor: <Badge variant='yellow'>Minor</Badge>,
+        info: <Badge variant='indigo'>Info</Badge>,
+    },
    linkType: {
     osu: <Badge variant='magenta'>OSU</Badge>,
     external: <Badge variant='seafoam'>External</Badge>,
     course: <Badge variant='yellow'>Course</Badge>,
     unknown: <Badge variant='neutral'>Unknown</Badge>,
    },
-    status: {
+    publishStatus: {
         published: <Badge variant='positive'>Published</Badge>,
         unpublished: <Badge variant='negative'>Unpublished</Badge>,
     }
