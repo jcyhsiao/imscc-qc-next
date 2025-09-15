@@ -68,13 +68,12 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
                         ).length;
                         if (selectedLinkTypes.includes('osu') && showOSULibrariesLinksOnly) {
                             filteredLinksCount -= resource.links.filter(link =>
-                                link.type === 'osu'
-                                && !isOSULibrariesLink(link)).length;
+                                !isOSULibrariesLink(link)).length;
                         }
 
                         return (
                             <Disclosure id={resource.identifier} key={resource.identifier} isHidden={
-                                filteredLinksCount == 0 ||
+                                filteredLinksCount <= 0 ||
                                 (resource.clarifiedType !== undefined && !selectedParentResourceTypes.includes(resource.clarifiedType)) ||
                                 (showFromPublishedParentOnly && !resource.published)}>
                                 <DisclosureTitle>
