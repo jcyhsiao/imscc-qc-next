@@ -72,7 +72,7 @@ export type AccessibilityResultType = ACCESSIBILITY_RESULT_TYPES[number];
 
 export type EnhancedAxeResult = Axe.Result & {
   type: string;
-  // parentItemIdentifier: string;
+  parentItemIdentifier: string;
   // parentItemTitle: string;
   // parentItemType: string;
   // parentItemPublished: boolean;
