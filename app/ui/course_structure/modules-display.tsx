@@ -1,31 +1,22 @@
 import { Module, ModuleItem } from "@/app/lib/definitions";
 import { getReadableType } from "@/app/lib/imscc-handling";
 import { QC_BADGES, getIconForItemType, capitalize } from "@/app/ui/helpers";
-import { Text, Grid } from "@adobe/react-spectrum";
-import {
-  Accordion,
-  Badge,
-  Disclosure,
-  DisclosureTitle,
-  DisclosurePanel,
-  Flex,
-  View,
-} from "@adobe/react-spectrum";
+import { Text, Grid, View, Flex, Badge } from "@/app/components/CustomComponents";
 
 export function ModulesDisplay({ modules }: { modules: Module[] }) {
   return (
-    <Accordion>
+    <div>
       {modules.map((module) => (
-        <Disclosure id={module.title} key={module.identifier}>
-          <DisclosureTitle>
+        <details key={module.identifier} style={{ margin: '8px 0', border: '1px solid #ccc', borderRadius: '4px' }}>
+          <summary style={{ padding: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
             <Grid columns={["11fr", "1fr"]} width="90vw">
               <Text>{module.title}</Text>
               {module.published
                 ? QC_BADGES.publishStatus.published
                 : QC_BADGES.publishStatus.unpublished}
             </Grid>
-          </DisclosureTitle>
-          <DisclosurePanel>
+          </summary>
+          <div style={{ padding: '8px' }}>
             <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
               {module.items.map((item) => (
                 <li
@@ -38,10 +29,10 @@ export function ModulesDisplay({ modules }: { modules: Module[] }) {
                 </li>
               ))}
             </ul>
-          </DisclosurePanel>
-        </Disclosure>
+          </div>
+        </details>
       ))}
-    </Accordion>
+    </div>
   );
 }
 

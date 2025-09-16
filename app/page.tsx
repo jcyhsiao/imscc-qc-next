@@ -1,8 +1,9 @@
 'use client';
 
-import { Button, Divider, Flex, Grid, FileTrigger, Link, Heading, Text, View } from '@adobe/react-spectrum';
+import { Button, Heading, Link } from 'react-aria-components';
 import { useState } from 'react';
 import Results from '@/app/(results)/results';
+import { View, Flex, Grid, Divider, FileTrigger, Text } from '@/app/components/CustomComponents';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -26,9 +27,9 @@ export default function Home() {
             }}
             acceptedFileTypes={['.imscc', '.zip']}
           >
-            <Button variant='accent'>Pick IMSCC File</Button>
+            <Button data-variant='accent'>Pick IMSCC File</Button>
           </FileTrigger>
-          <Button variant='accent' isDisabled={file === null} onPress={() => setIsAnalyzing(true)}>Run QA Checks</Button>
+          <Button data-variant='accent' isDisabled={file === null} onPress={() => setIsAnalyzing(true)}>Run QA Checks</Button>
 
         </Flex><Divider />
           <Results selectedFile={file} isAnalyzing={isAnalyzing} setIsAnalyzing={(status: boolean) => setIsAnalyzing(status)} />

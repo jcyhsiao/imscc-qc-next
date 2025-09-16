@@ -1,4 +1,4 @@
-import { View, Heading, ProgressCircle, Text, Item, TabList, TabPanels, Tabs } from '@adobe/react-spectrum';
+import { Heading, Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
 import { useEffect, useState } from 'react';
 import Alert from '@spectrum-icons/workflow/Alert';
 
@@ -10,6 +10,7 @@ import CourseStructureTab from '@/app/(results)/course-structure';
 import CourseResourcesTab from '@/app/(results)/course-resources';
 import CourseLinksTab from './course-links';
 import AccessibilityCheckTab from './accessibility-check';
+import { View, Text, ProgressCircle } from '@/app/components/CustomComponents';
 
 type Props = {
     selectedFile?: File | null;
@@ -93,41 +94,39 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
             {
                 isAnalysisComplete && !isAnalysisErrored
                     ? (
-                        <Tabs aria-label="Results Tabs">
-                            <TabList>
-                                <Item key="struct">Structure</Item>
-                                <Item key="rsc">Resources</Item>
-                                <Item key="ally">Accessibility</Item>
-                                <Item key="links">Links</Item>
-                                <Item key="files">File Attachments</Item>
-                                <Item key="videos">Videos</Item>
-                                <Item key="exports">Export</Item>
+                        <Tabs>
+                            <TabList aria-label="Results Tabs">
+                                <Tab id="struct">Structure</Tab>
+                                <Tab id="rsc">Resources</Tab>
+                                <Tab id="ally">Accessibility</Tab>
+                                <Tab id="links">Links</Tab>
+                                <Tab id="files">File Attachments</Tab>
+                                <Tab id="videos">Videos</Tab>
+                                <Tab id="exports">Export</Tab>
                             </TabList>
-                            <TabPanels>
-                                <Item key="struct">
-                                    <CourseStructureTab modules={allModules} />
-                                </Item>
-                                <Item key="rsc">
-                                    <CourseResourcesTab resources={allResources} />
-                                </Item>
-                                <Item key="ally">
-                                    {allAccessibilityResults === null
-                                    ? <Text>(No accessibility results found)</Text>
-                                    : <AccessibilityCheckTab resources={allResources} />}
-                                </Item>
-                                <Item key="links">
-                                    <CourseLinksTab resources={allResources} />
-                                </Item>
-                                <Item key="files">
-                                    Alea jacta est.
-                                </Item>
-                                <Item key="videos">
-                                    Alea jacta est.
-                                </Item>
-                                <Item key="exports">
-                                    Alea jacta est.
-                                </Item>
-                            </TabPanels>
+                            <TabPanel id="struct">
+                                <CourseStructureTab modules={allModules} />
+                            </TabPanel>
+                            <TabPanel id="rsc">
+                                <CourseResourcesTab resources={allResources} />
+                            </TabPanel>
+                            <TabPanel id="ally">
+                                {allAccessibilityResults === null
+                                ? <Text>(No accessibility results found)</Text>
+                                : <AccessibilityCheckTab resources={allResources} />}
+                            </TabPanel>
+                            <TabPanel id="links">
+                                <CourseLinksTab resources={allResources} />
+                            </TabPanel>
+                            <TabPanel id="files">
+                                Alea jacta est.
+                            </TabPanel>
+                            <TabPanel id="videos">
+                                Alea jacta est.
+                            </TabPanel>
+                            <TabPanel id="exports">
+                                Alea jacta est.
+                            </TabPanel>
                         </Tabs>
                     )
                     : <></>

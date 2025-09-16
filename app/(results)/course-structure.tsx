@@ -1,6 +1,6 @@
 import { Module } from '@/app/lib/definitions';
 import { ModulesDisplay } from '@/app/ui/course_structure/modules-display';
-import { Text } from '@adobe/react-spectrum';
+import { Text } from '@/app/components/CustomComponents';
 import { Suspense } from 'react';
 
 export default function CourseStructureTab({ modules }: { modules: Module[] }) {

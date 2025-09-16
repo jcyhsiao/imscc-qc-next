@@ -1,4 +1,3 @@
-/*
 @import "tailwindcss";
 
 :root {
@@ -25,4 +24,153 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
-*/
+
+/* Basic react-aria-components styling */
+.react-aria-Button {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f0f0f0;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.react-aria-Button[data-variant="accent"] {
+  background: #0066cc;
+  color: white;
+  border-color: #0066cc;
+}
+
+.react-aria-Button[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.react-aria-Button[data-pressed] {
+  transform: translateY(1px);
+}
+
+.react-aria-Tabs {
+  display: flex;
+  flex-direction: column;
+}
+
+.react-aria-TabList {
+  display: flex;
+  border-bottom: 1px solid #ccc;
+}
+
+.react-aria-Tab {
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.react-aria-Tab[data-selected] {
+  border-bottom: 2px solid #0066cc;
+  color: #0066cc;
+}
+
+.react-aria-TabPanel {
+  padding: 16px 0;
+}
+
+.react-aria-Checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.react-aria-Switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.react-aria-Link {
+  color: #0066cc;
+  text-decoration: underline;
+}
+
+.react-aria-Link[data-hovered] {
+  color: #004499;
+}
+
+/* Custom styling for components without direct equivalents */
+.custom-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.custom-badge-positive { background: #d4edda; color: #155724; }
+.custom-badge-negative { background: #f8d7da; color: #721c24; }
+.custom-badge-info { background: #d1ecf1; color: #0c5460; }
+.custom-badge-neutral { background: #e2e3e5; color: #383d41; }
+.custom-badge-purple { background: #e2d9f3; color: #6f42c1; }
+.custom-badge-magenta { background: #f8d7da; color: #e83e8c; }
+.custom-badge-fuchsia { background: #f8d7da; color: #e83e8c; }
+.custom-badge-yellow { background: #fff3cd; color: #856404; }
+.custom-badge-indigo { background: #d1ecf1; color: #6610f2; }
+.custom-badge-seafoam { background: #d1ecf1; color: #20c997; }
+
+.custom-progress {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #0066cc;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.custom-divider {
+  border: none;
+  height: 1px;
+  background: #ccc;
+  margin: 16px 0;
+}
+
+.custom-well {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 16px;
+  margin: 8px 0;
+}
+
+.custom-file-trigger {
+  position: relative;
+  display: inline-block;
+}
+
+.custom-file-trigger input[type="file"] {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.custom-view {
+  display: block;
+}
+
+.custom-flex {
+  display: flex;
+}
+
+.custom-grid {
+  display: grid;
+}
