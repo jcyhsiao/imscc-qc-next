@@ -14,8 +14,8 @@ const nextConfig: NextConfig = {
   },
   */
   transpilePackages: [
-    "@adobe/react-spectrum",
-    "@react-spectrum/*",
+    "react-aria-components",
+    "@react-aria/*",
     "@spectrum-icons/*",
   ].flatMap((spec) => glob.sync(`${spec}`, { cwd: "node_modules/" })),
 };

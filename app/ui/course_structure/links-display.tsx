@@ -1,23 +1,15 @@
 import { LinkObject, Resource } from "@/app/lib/definitions";
-import {
-  Accordion,
-  Disclosure,
-  DisclosureTitle,
-  DisclosurePanel,
-  Checkbox,
-  Flex,
-  Link,
-  CheckboxGroup,
-  Badge,
-  Grid,
-  Text,
-  View,
-  Switch,
-} from "@adobe/react-spectrum";
-// import { Accordion, Disclosure, DisclosureTitle, DisclosurePanel } from '@adobe/react-spectrum';
+import { CheckboxGroup, Checkbox, Switch, Link } from 'react-aria-components';
 import { capitalize, QC_BADGES } from "@/app/ui/helpers";
 import { getResourceByIdentifier } from "@/app/lib/imscc-handling";
 import { useState } from "react";
+import { 
+  Badge, 
+  View, 
+  Text, 
+  Grid, 
+  Flex 
+} from "@/app/components/CustomComponents";
 
 type LinksDisplayProps = {
   resources: Resource[];
@@ -84,11 +76,10 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
       </View>
       <Flex gap="size-300" wrap>
         <CheckboxGroup
-          label="Link Types"
-          name="link type"
           value={selectedLinkTypes}
           onChange={setSelectedLinkTypes}
         >
+          <Text>Link Types</Text>
           {Array.from(allFoundLinkTypes).map((type) => (
             <Checkbox key={type} value={type}>
               {type === "osu" ? type.toUpperCase() : capitalize(type)} (
@@ -97,11 +88,10 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
           ))}
         </CheckboxGroup>
         <CheckboxGroup
-          label="Found in Parent Resource"
-          name="parent resource type"
           value={selectedParentResourceTypes}
           onChange={setSelectedParentResourceTypes}
         >
+          <Text>Found in Parent Resource</Text>
           {Array.from(allFoundParentResourceTypes).map((type) => (
             <Checkbox key={type} value={type}>
               {capitalize(type)} ({countsByParentResourceTypes[type]})
@@ -121,7 +111,7 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
           Show OSU Libraries Links Only
         </Switch>
       </Flex>
-      <Accordion>
+      <div>
         {allResourcesWithLinks
           .sort((a, b) => a.title.localeCompare(b.title))
           .map((resource) => {
@@ -138,20 +128,22 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
               ).length;
             }
 
+            const isHidden = 
+              filteredLinksCount <= 0 ||
+              (resource.clarifiedType !== undefined &&
+                !selectedParentResourceTypes.includes(
+                  resource.clarifiedType,
+                )) ||
+              (showFromPublishedParentOnly && !resource.published);
+
+            if (isHidden) return null;
+
             return (
-              <Disclosure
-                id={resource.identifier}
+              <details
                 key={resource.identifier}
-                isHidden={
-                  filteredLinksCount <= 0 ||
-                  (resource.clarifiedType !== undefined &&
-                    !selectedParentResourceTypes.includes(
-                      resource.clarifiedType,
-                    )) ||
-                  (showFromPublishedParentOnly && !resource.published)
-                }
+                style={{ margin: '8px 0', border: '1px solid #ccc', borderRadius: '4px' }}
               >
-                <DisclosureTitle>
+                <summary style={{ padding: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
                   <Grid columns={["5fr", "1fr"]} gap="size-100" width="90vw">
                     <Text>{resource.title}</Text>
                     <Flex gap="size-100" justifyContent="end">
@@ -163,8 +155,8 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
                         : QC_BADGES.publishStatus.unpublished}
                     </Flex>
                   </Grid>
-                </DisclosureTitle>
-                <DisclosurePanel>
+                </summary>
+                <div style={{ padding: '8px' }}>
                   <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
                     {resource.links.map((link) => (
                       <li key={`${link.text}-rand${Math.random() * 1000}`}>
@@ -186,11 +178,11 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
                       </li>
                     ))}
                   </ul>
-                </DisclosurePanel>
-              </Disclosure>
+                </div>
+              </details>
             );
           })}
-      </Accordion>
+      </div>
     </>
   );
 }

@@ -1,17 +1,13 @@
 import { Resource } from "@/app/lib/definitions";
-import {
-  Accordion,
-  Disclosure,
-  DisclosureTitle,
-  DisclosurePanel,
-  Badge,
-  Grid,
-  Flex,
-  View,
-  Text,
-} from "@adobe/react-spectrum";
 import { getReadableType } from "@/app/lib/imscc-handling";
 import { capitalize } from "@/app/ui/helpers";
+import { 
+  Badge, 
+  View, 
+  Text, 
+  Grid, 
+  Flex 
+} from "@/app/components/CustomComponents";
 
 export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
   const groupedByType = resources.reduce(
@@ -31,13 +27,13 @@ export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
           external tools
         </Text>
       </View>
-      <Accordion>
+      <div>
         {Object.entries(groupedByType).map(([type, items]) => (
-          <Disclosure id={type} key={type}>
-            <DisclosureTitle>
+          <details key={type} style={{ margin: '8px 0', border: '1px solid #ccc', borderRadius: '4px' }}>
+            <summary style={{ padding: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
               {capitalize(type)} ({items.length})
-            </DisclosureTitle>
-            <DisclosurePanel>
+            </summary>
+            <div style={{ padding: '8px' }}>
               <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
                 {items
                   .sort((a, b) => a.title.localeCompare(b.title))
@@ -47,10 +43,10 @@ export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
                     </li>
                   ))}
               </ul>
-            </DisclosurePanel>
-          </Disclosure>
+            </div>
+          </details>
         ))}
-      </Accordion>
+      </div>
     </>
   );
 }

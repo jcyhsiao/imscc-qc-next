@@ -3,28 +3,20 @@ import {
   Resource,
   EnhancedAxeResult,
 } from "@/app/lib/definitions";
-import {
-  Badge,
-  ContextualHelp,
-  Heading,
-  Content,
-  Grid,
-  Well,
-  Accordion,
-  CheckboxGroup,
-  Checkbox,
-  Flex,
-  Disclosure,
-  Switch,
-  DisclosureTitle,
-  DisclosurePanel,
-  Link,
-  Text,
-  View,
-} from "@adobe/react-spectrum";
+import { CheckboxGroup, Checkbox, Switch, Link } from 'react-aria-components';
 import { useState } from "react";
 import { capitalize, QC_BADGES } from "@/app/ui/helpers";
 import { getResourceByIdentifier } from "@/app/lib/imscc-handling";
+import { 
+  Badge, 
+  View, 
+  Text, 
+  Grid, 
+  Well, 
+  Flex 
+} from "@/app/components/CustomComponents";
+import { ContextualHelp } from "@/app/components/ContextualHelp";
+import { Heading } from 'react-aria-components';
 
 export function AccessibilityResultsDisplay({
   resources,
@@ -70,11 +62,10 @@ export function AccessibilityResultsDisplay({
     <>
       <Flex gap="size-300">
         <CheckboxGroup
-          label="Result Types"
-          name="result type"
           value={selectedResultTypes}
           onChange={setSelectedResultTypes}
         >
+          <Text>Result Types</Text>
           {Array.from(allResultTypes).map((type) => (
             <Checkbox key={type} value={type}>
               {type !== "incomplete" ? capitalize(type) : "Investigate"} (
@@ -83,11 +74,10 @@ export function AccessibilityResultsDisplay({
           ))}
         </CheckboxGroup>
         <CheckboxGroup
-          label="Found in Parent Resource"
-          name="parent resource type"
           value={selectedResourceTypes}
           onChange={setSelectedResourceTypes}
         >
+          <Text>Found in Parent Resource</Text>
           {Array.from(allParentResourceTypes).map((type) => (
             <Checkbox key={type} value={type}>
               {capitalize(type)} (
@@ -118,7 +108,7 @@ export function AccessibilityResultsDisplay({
         </Switch>
       </Flex>
 
-      <Accordion>
+      <div>
         {resources
           .sort((a, b) => a.title.localeCompare(b.title))
           .map((resource) => {
@@ -130,22 +120,24 @@ export function AccessibilityResultsDisplay({
               selectedResultTypes.includes(result.type),
             ).length;
 
+            const isHidden = 
+              resourceResults.length === 0 ||
+              filteredResultsCount === 0 ||
+              !selectedResourceTypes.includes(
+                resource.clarifiedType || "tbd",
+              ) ||
+              (showFromPublishedParentOnly && !resource.published) ||
+              (showFromInModuleParentOnly &&
+                resource.moduleTitle === undefined);
+
+            if (isHidden) return null;
+
             return (
-              <Disclosure
-                id={resource.identifier}
+              <details
                 key={resource.identifier}
-                isHidden={
-                  resourceResults.length === 0 ||
-                  filteredResultsCount === 0 ||
-                  !selectedResourceTypes.includes(
-                    resource.clarifiedType || "tbd",
-                  ) ||
-                  (showFromPublishedParentOnly && !resource.published) ||
-                  (showFromInModuleParentOnly &&
-                    resource.moduleTitle === undefined)
-                }
+                style={{ margin: '8px 0', border: '1px solid #ccc', borderRadius: '4px' }}
               >
-                <DisclosureTitle>
+                <summary style={{ padding: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
                   <Grid columns={["5fr", "1fr"]} gap="size-100" width="90vw">
                     <Grid columns={["1fr"]} gap="size-50">
                       {resource.title} (in module:{" "}
@@ -160,8 +152,8 @@ export function AccessibilityResultsDisplay({
                         : QC_BADGES.publishStatus.unpublished}
                     </Flex>
                   </Grid>
-                </DisclosureTitle>
-                <DisclosurePanel>
+                </summary>
+                <div style={{ padding: '8px' }}>
                   <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
                     <li id={`${resource.identifier}-${Math.random() * 1000}`}>
                       {resourceResults.map((result) => (
@@ -176,11 +168,11 @@ export function AccessibilityResultsDisplay({
                       ))}
                     </li>
                   </ul>
-                </DisclosurePanel>
-              </Disclosure>
+                </div>
+              </details>
             );
           })}
-      </Accordion>
+      </div>
     </>
   );
 }
@@ -232,11 +224,10 @@ export function AccessibilityResultDisplay({
       {result.help}
 
       <ContextualHelp
-        variant="info"
         aria-label={`More information about ${result.impact ?? ""} ${type}: ${result.help}`}
       >
         <Heading>More Information</Heading>
-        <Content>
+        <div>
           <Text>Description: </Text>
           <Text>{result.description}</Text>
           <br />
@@ -253,7 +244,7 @@ export function AccessibilityResultDisplay({
           <Link href={result.helpUrl} target="_blank" rel="noopener noreferrer">
             More Info
           </Link>
-        </Content>
+        </div>
       </ContextualHelp>
     </View>
   );

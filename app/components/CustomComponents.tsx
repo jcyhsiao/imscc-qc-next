@@ -18,10 +18,9 @@ export function Badge({ variant = 'neutral', children }: BadgeProps) {
 interface ProgressCircleProps {
   'aria-label': string;
   isIndeterminate?: boolean;
-  size?: 'S' | 'M' | 'L';
 }
 
-export function ProgressCircle({ 'aria-label': ariaLabel, isIndeterminate, size }: ProgressCircleProps) {
+export function ProgressCircle({ 'aria-label': ariaLabel, isIndeterminate }: ProgressCircleProps) {
   return (
     <div 
       className="custom-progress" 
@@ -66,9 +65,10 @@ interface FlexProps {
   direction?: 'row' | 'column';
   alignItems?: string;
   justifyContent?: string;
+  wrap?: boolean;
 }
 
-export function Flex({ children, gap, direction = 'row', alignItems, justifyContent, ...props }: FlexProps) {
+export function Flex({ children, gap, direction = 'row', alignItems, justifyContent, wrap, ...props }: FlexProps) {
   const style: React.CSSProperties = {
     display: 'flex',
     flexDirection: direction,
@@ -76,6 +76,7 @@ export function Flex({ children, gap, direction = 'row', alignItems, justifyCont
   if (gap) style.gap = gap.replace('size-', '') + 'px';
   if (alignItems) style.alignItems = alignItems;
   if (justifyContent) style.justifyContent = justifyContent;
+  if (wrap) style.flexWrap = 'wrap';
 
   return (
     <div className="custom-flex" style={style} {...props}>

@@ -83,7 +83,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
             }
             {
                 isAnalyzing
-                    ? <ProgressCircle aria-label='Analyzing' isIndeterminate size='L' />
+                    ? <ProgressCircle aria-label='Analyzing' isIndeterminate />
                     : <></>
             }
             {

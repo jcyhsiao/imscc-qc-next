@@ -1,13 +1,12 @@
 import React from 'react';
-import { Button, Dialog, DialogTrigger, Heading, Popover } from 'react-aria-components';
+import { Button, Dialog, DialogTrigger, Popover } from 'react-aria-components';
 
 interface ContextualHelpProps {
-  variant?: 'info' | 'help';
   'aria-label'?: string;
   children: React.ReactNode;
 }
 
-export function ContextualHelp({ variant = 'info', 'aria-label': ariaLabel, children }: ContextualHelpProps) {
+export function ContextualHelp({ 'aria-label': ariaLabel, children }: ContextualHelpProps) {
   return (
     <DialogTrigger>
       <Button aria-label={ariaLabel || 'More information'}>
