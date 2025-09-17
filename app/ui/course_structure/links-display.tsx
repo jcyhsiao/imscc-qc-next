@@ -18,6 +18,7 @@ import {
 import { capitalize, QC_BADGES } from "@/app/ui/helpers";
 import { getResourceByIdentifier } from "@/app/lib/imscc-handling";
 import { useState } from "react";
+import CheckboxGroupBuilder from "@/app/ui/checkbox-group-builder";
 
 type LinksDisplayProps = {
   resources: Resource[];
@@ -41,9 +42,9 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
     allFoundLinks.map((link) => link.type.toString()),
   );
 
-  const countsByTypes: { [key: string]: number } = {};
+  const countsByType: { [key: string]: number } = {};
   Array.from(allFoundLinkTypes).forEach((type) => {
-    countsByTypes[type] = allFoundLinks.filter(
+    countsByType[type] = allFoundLinks.filter(
       (link) => link.type.toString() === type,
     ).length;
   });
@@ -55,9 +56,9 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
     allResourcesWithLinks.map((resource) => resource.clarifiedType || "tbd"),
   );
 
-  const countsByParentResourceTypes: { [key: string]: number } = {};
+  const countsByParentResourceType: { [key: string]: number } = {};
   Array.from(allFoundParentResourceTypes).forEach((type) => {
-    countsByParentResourceTypes[type] = allFoundLinks.filter(
+    countsByParentResourceType[type] = allFoundLinks.filter(
       (link) =>
         getResourceByIdentifier(resources, link.parentResourceIdentifier)
           ?.clarifiedType === type,
@@ -74,6 +75,7 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
   const [showOSULibrariesLinksOnly, setShowOSULibrariesLinksOnly] =
     useState(false);
 
+  console.log(countsByParentResourceType);
   return (
     <>
       <View>
@@ -83,31 +85,28 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
         </Text>
       </View>
       <Flex gap="size-300" wrap>
-        <CheckboxGroup
+        <CheckboxGroupBuilder
           label="Link Types"
           name="link type"
-          value={selectedLinkTypes}
-          onChange={setSelectedLinkTypes}
-        >
-          {Array.from(allFoundLinkTypes).map((type) => (
-            <Checkbox key={type} value={type}>
-              {type === "osu" ? type.toUpperCase() : capitalize(type)} (
-              {countsByTypes[type]})
-            </Checkbox>
-          ))}
-        </CheckboxGroup>
-        <CheckboxGroup
+          values={Array.from(allFoundLinkTypes)}
+          valuesLabelsOverrides={{ osu: "OSU" }}
+          valuesCounts={countsByType}
+          selectedValues={selectedLinkTypes}
+          onChange={(newSelectedLinkTypes: typeof selectedLinkTypes) =>
+            setSelectedLinkTypes(newSelectedLinkTypes)
+          }
+        />
+        <CheckboxGroupBuilder
           label="Found in Parent Resource"
           name="parent resource type"
-          value={selectedParentResourceTypes}
-          onChange={setSelectedParentResourceTypes}
-        >
-          {Array.from(allFoundParentResourceTypes).map((type) => (
-            <Checkbox key={type} value={type}>
-              {capitalize(type)} ({countsByParentResourceTypes[type]})
-            </Checkbox>
-          ))}
-        </CheckboxGroup>
+          values={Array.from(allFoundParentResourceTypes)}
+          valuesLabelsOverrides={{ osu: "OSU" }}
+          valuesCounts={countsByParentResourceType}
+          selectedValues={selectedParentResourceTypes}
+          onChange={(
+            newSelectedParentResourceTypes: typeof selectedParentResourceTypes,
+          ) => setSelectedLinkTypes(newSelectedParentResourceTypes)}
+        />
         <Switch
           isSelected={showFromPublishedParentOnly}
           onChange={setShowFromPublishedParentOnly}

@@ -11,8 +11,6 @@ import {
   Grid,
   Well,
   Accordion,
-  CheckboxGroup,
-  Checkbox,
   Flex,
   Disclosure,
   Switch,
@@ -25,6 +23,7 @@ import {
 import { useState } from "react";
 import { capitalize, QC_BADGES } from "@/app/ui/helpers";
 import { getResourceByIdentifier } from "@/app/lib/imscc-handling";
+import CheckboxGroupBuilder from "@/app/ui/checkbox-group-builder";
 
 export function AccessibilityResultsDisplay({
   resources,
@@ -66,44 +65,47 @@ export function AccessibilityResultsDisplay({
   const [showFromInModuleParentOnly, setShowFromInModuleParentOnly] =
     useState(false);
 
+  const countsByResultType: { [key: string]: number } = {};
+  Array.from(allResultTypes).forEach((type) => {
+    countsByResultType[type] = allResults.filter(
+      (result) => result.type == type,
+    ).length;
+  });
+
+  const countsByParentResourceType: { [key: string]: number } = {};
+  Array.from(allParentResourceTypes).forEach((type) => {
+    countsByParentResourceType[type] = allResults.filter(
+      (result) =>
+        getResourceByIdentifier(resources, result.parentItemIdentifier)
+          ?.clarifiedType == type,
+    ).length;
+  });
+
   return (
     <>
       <Flex gap="size-300">
-        <CheckboxGroup
+        <CheckboxGroupBuilder
           label="Result Types"
-          name="result type"
-          value={selectedResultTypes}
-          onChange={setSelectedResultTypes}
-        >
-          {Array.from(allResultTypes).map((type) => (
-            <Checkbox key={type} value={type}>
-              {type !== "incomplete" ? capitalize(type) : "Investigate"} (
-              {allResults.filter((result) => result.type == type).length})
-            </Checkbox>
-          ))}
-        </CheckboxGroup>
-        <CheckboxGroup
+          name="result types"
+          values={Array.from(allResultTypes)}
+          valuesCounts={countsByResultType}
+          valuesLabelsOverrides={{ incomplete: "Investigate" }}
+          selectedValues={selectedResultTypes}
+          onChange={(newSelectedResultTypes: typeof selectedResultTypes) =>
+            setSelectedResultTypes(newSelectedResultTypes)
+          }
+        />
+        <CheckboxGroupBuilder
           label="Found in Parent Resource"
           name="parent resource type"
-          value={selectedResourceTypes}
-          onChange={setSelectedResourceTypes}
-        >
-          {Array.from(allParentResourceTypes).map((type) => (
-            <Checkbox key={type} value={type}>
-              {capitalize(type)} (
-              {
-                allResults.filter(
-                  (result) =>
-                    getResourceByIdentifier(
-                      resources,
-                      result.parentItemIdentifier,
-                    )?.clarifiedType === type,
-                ).length
-              }
-              )
-            </Checkbox>
-          ))}
-        </CheckboxGroup>
+          values={Array.from(allParentResourceTypes)}
+          valuesCounts={countsByParentResourceType}
+          selectedValues={selectedResourceTypes}
+          onChange={(newSelectedResourceTypes: typeof selectedResourceTypes) =>
+            setSelectedResourceTypes(newSelectedResourceTypes)
+          }
+        />
+
         <Switch
           isSelected={showFromPublishedParentOnly}
           onChange={setShowFromPublishedParentOnly}
@@ -224,7 +226,6 @@ export function AccessibilityResultDisplay({
     ? QC_BADGES.accessibilityResultType[result.type as AccessibilityResultType]
     : null;
 
-  console.log(result);
   return (
     <View padding="size-100" isHidden={isHidden}>
       {typeBadge}
