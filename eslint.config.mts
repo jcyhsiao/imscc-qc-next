@@ -13,6 +13,7 @@ export default defineConfig([
     rules: {
       "@typescript-eslint/strict-boolean-expressions": "error",
     },
+    ignores: ["./ui/ideas/*"],
   },
   tseslint.configs.strictTypeChecked,
   pluginReact.configs.flat.recommended,

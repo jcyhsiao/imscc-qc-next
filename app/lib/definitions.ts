@@ -35,6 +35,7 @@ export interface ModuleItem {
   contentType: string;
 }
 
+
 export interface VideoObject {
   title: string;
   platform: string;
@@ -72,7 +73,7 @@ export type AccessibilityResultType = ACCESSIBILITY_RESULT_TYPES[number];
 
 export type EnhancedAxeResult = Axe.Result & {
   type: string;
-  parentItemIdentifier: string;
+  parentResourceIdentifier: string;
   // parentItemTitle: string;
   // parentItemType: string;
   // parentItemPublished: boolean;
@@ -83,10 +84,14 @@ export type EnhancedAxeResults = Omit<
   Axe.AxeResults,
   "violations" | "passes" | "incomplete" | "inapplicable"
 > & {
-  violations: EnhancedAxeResult[];
-  passes: EnhancedAxeResult[];
-  incomplete: EnhancedAxeResult[];
-  inapplicable: EnhancedAxeResult[];
+  // retire_violations: EnhancedAxeResult[];
+  // retire_passes: EnhancedAxeResult[];
+  // retire_incomplete: EnhancedAxeResult[];
+  // retire_inapplicable: EnhancedAxeResult[];
+  results: EnhancedAxeResult[];
 };
+
+export type ResourceObjectTypeLiteral = 'videos' | 'links' | 'files' | 'accessibilityResults';
+export type ResourceObjectType = VideoObject | LinkObject | FileObject | EnhancedAxeResult | null;
 
 export type PlatformDOMParser = DOMParser | null;

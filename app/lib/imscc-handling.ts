@@ -609,7 +609,7 @@ export async function checkIMSCCResourcesForAccessibility(
   fileContents: { [key: string]: string },
 ) {
   if (parser === null)
-    throw Error("analyzeIMSCCRichContentForAccessibility: parser is null.");
+    throw Error("checkIMSCCResourcesForAccessibility: parser is null.");
 
   for (const resource of resources) {
     if (!resource.analysisHref) continue;
@@ -658,7 +658,7 @@ export async function checkIMSCCResourcesForAccessibility(
             ({
               ...issue,
               type,
-              parentItemIdentifier: resource.identifier,
+              parentResourceIdentifier: resource.identifier,
               parentItemTitle: resource.title,
               parentItemType:
                 getReadableType(resource.clarifiedType) ||
@@ -671,26 +671,23 @@ export async function checkIMSCCResourcesForAccessibility(
           if (allResults === null)
             allResults = {
               ...results,
-              violations: [],
-              passes: [],
-              incomplete: [],
-              inapplicable: [],
+              results: [],
             };
 
-          allResults.violations.push(
+          allResults.results.push(
             ...results.violations.map((issue) =>
               addMetadata("violations", issue),
             ),
           );
-          allResults.passes.push(
+          allResults.results.push(
             ...results.passes.map((issue) => addMetadata("passes", issue)),
           );
-          allResults.incomplete.push(
+          allResults.results.push(
             ...results.incomplete.map((issue) =>
               addMetadata("incomplete", issue),
             ),
           );
-          allResults.inapplicable.push(
+          allResults.results.push(
             ...results.inapplicable.map((issue) =>
               addMetadata("inapplicable", issue),
             ),
@@ -698,7 +695,7 @@ export async function checkIMSCCResourcesForAccessibility(
 
           if (!allResults)
             throw Error(
-              "analyzeIMSCCRichContentForAccessibility: allResults should NOT be null.",
+              "checkIMSCCResourcesForAccessibility: allResults should NOT be null.",
             );
           resource.accessibilityResults = allResults;
         }
@@ -709,116 +706,6 @@ export async function checkIMSCCResourcesForAccessibility(
       }
     }
   }
-}
-
-/**
- * Run axe accessibility checks on items and prepare data for the accessibility tab.
- */
-export async function retire_analyzeIMSCCRichContentForAccessibility(
-  parser: PlatformDOMParser,
-  items: Resource[],
-  fileContents: { [key: string]: string },
-): Promise<EnhancedAxeResults> {
-  if (parser === null)
-    throw Error("analyzeIMSCCRichContentForAccessibility: parser is null.");
-
-  let allResults: EnhancedAxeResults | null = null;
-
-  for (const item of items) {
-    if (!item.analysisHref) continue;
-    const content = fileContents[item.analysisHref];
-    if (!content) continue;
-
-    let doc: Document;
-
-    if (item.analysisType === "xml") {
-      const xmlDoc = parser.parseFromString(content, "application/xml");
-      // const description = xmlDoc.querySelector("description");
-      const description =
-        xmlDoc.getElementsByTagName("description").length > 0
-          ? xmlDoc.getElementsByTagName("description")[0]
-          : null;
-      const htmlContent = description ? description.textContent : "";
-      doc = parser.parseFromString(htmlContent, "text/html");
-    } else if (item.analysisType === "discussion_xml") {
-      const xmlDoc = parser.parseFromString(content, "application/xml");
-      // const text = xmlDoc.querySelector("text");
-      const text =
-        xmlDoc.getElementsByTagName("text").length > 0
-          ? xmlDoc.getElementsByTagName("text")[0]
-          : null;
-      const htmlContent = text ? text.textContent : "";
-      doc = parser.parseFromString(htmlContent, "text/html");
-    } else {
-      doc = parser.parseFromString(content, "text/html");
-    }
-
-    if (doc.body && doc.body.innerHTML.trim() !== "") {
-      try {
-        if (doc.body.querySelectorAll("*").length > 0) {
-          const axeOptions = {
-            preload: false,
-            runOnly: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"],
-          };
-          const results = await axe.run(
-            doc.body.querySelectorAll("*"),
-            axeOptions,
-          );
-
-          const addMetadata = (type: string, issue: Axe.Result) =>
-            ({
-              ...issue,
-              type,
-              parentItemIdentifier: item.identifier,
-              parentItemTitle: item.title,
-              parentItemType:
-                getReadableType(item.clarifiedType) || "ERROR: unknown type",
-              parentItemPublished: item.published,
-              parentItemModuleTitle: item.moduleTitle,
-            }) as EnhancedAxeResult;
-
-          // If allResults hasn't been initialized yet, do so now
-          if (allResults === null)
-            allResults = {
-              ...results,
-              violations: [],
-              passes: [],
-              incomplete: [],
-              inapplicable: [],
-            };
-
-          allResults.violations.push(
-            ...results.violations.map((issue) =>
-              addMetadata("violations", issue),
-            ),
-          );
-          allResults.passes.push(
-            ...results.passes.map((issue) => addMetadata("passes", issue)),
-          );
-          allResults.incomplete.push(
-            ...results.incomplete.map((issue) =>
-              addMetadata("incomplete", issue),
-            ),
-          );
-          allResults.inapplicable.push(
-            ...results.inapplicable.map((issue) =>
-              addMetadata("inapplicable", issue),
-            ),
-          );
-        }
-      } catch (e) {
-        console.warn(
-          `Accessibility scan skipped for ${item.title}: ${(e as Error).message}`,
-        );
-      }
-    }
-  }
-
-  if (!allResults)
-    throw Error(
-      "analyzeIMSCCRichContentForAccessibility: allResults should NOT be null.",
-    );
-  return allResults;
 }
 
 /* =========================================================================

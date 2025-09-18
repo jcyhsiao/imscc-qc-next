@@ -2,7 +2,7 @@ import { View, Heading, ProgressCircle, Text, Item, TabList, TabPanels, Tabs } f
 import { useEffect, useState } from 'react';
 import Alert from '@spectrum-icons/workflow/Alert';
 
-import { extractIMSCC, retire_analyzeIMSCCRichContentForAccessibility, inventoryIMSCCModules, inventoryIMSCCManifest, reconcileIMSCCModulesAndResources, identifyObjectsInIMSCCResources, checkIMSCCResourcesForAccessibility } from '@/app/lib/imscc-handling';
+import { extractIMSCC, inventoryIMSCCModules, inventoryIMSCCManifest, reconcileIMSCCModulesAndResources, identifyObjectsInIMSCCResources, checkIMSCCResourcesForAccessibility } from '@/app/lib/imscc-handling';
 import { Resource, Module } from '@/app/lib/definitions';
 import { EnhancedAxeResults } from '@/app/lib/definitions';
 
@@ -26,7 +26,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
     const [allResources, setAllResources] = useState<Resource[]>([]);
     const [allModules, setAllModules] = useState<Module[]>([]);
 
-    const [allAccessibilityResults, setAllAccessibilityResults] = useState<EnhancedAxeResults | null>(null);
+    // const [allAccessibilityResults, setAllAccessibilityResults] = useState<EnhancedAxeResults | null>(null);
 
     // Use useEffect to trigger the analysis when startAnalysis or selectedFile changes
     useEffect(() => {
@@ -52,10 +52,6 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                 setAllModules(modulesResults);
 
                 await identifyObjectsInIMSCCResources(domParser, resourcesResults, fileContentsResults);
-
-                // TODO: Retire
-                const accessibilityResults = await retire_analyzeIMSCCRichContentForAccessibility(domParser, resourcesResults, fileContentsResults);
-                setAllAccessibilityResults(accessibilityResults);
 
                 await checkIMSCCResourcesForAccessibility(domParser, resourcesResults, fileContentsResults);
                 setAllResources(resourcesResults);
@@ -111,9 +107,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                                     <CourseResourcesTab resources={allResources} />
                                 </Item>
                                 <Item key="ally">
-                                    {allAccessibilityResults === null
-                                    ? <Text>(No accessibility results found)</Text>
-                                    : <AccessibilityCheckTab resources={allResources} />}
+                                   <AccessibilityCheckTab resources={allResources} />
                                 </Item>
                                 <Item key="links">
                                     <CourseLinksTab resources={allResources} />

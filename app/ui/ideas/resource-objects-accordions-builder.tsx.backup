@@ -1,0 +1,141 @@
+// TODO: This was a good idea, but introduced a lot of jank
+
+import {
+  Accordion,
+  Disclosure,
+  DisclosureTitle,
+  DisclosurePanel,
+  Badge,
+  Text,
+} from "@adobe/react-spectrum";
+
+import { JSX, useMemo } from "react";
+
+import { Resource, ResourceObjectType, ResourceObjectTypeLiteral } from "@/app/lib/definitions";
+
+
+type Props = {
+  resources: Resource[];
+  objectType: ResourceObjectTypeLiteral;
+  sortResourcesBy: (a: Resource, b: Resource) => number;
+  disclosureIsHidden: (resource: Resource) => boolean;
+  titleBuilder: (resource: Resource) => JSX.Element;
+  objectBuilder: (object: ResourceObjectType, resources: Resource[]) => JSX.Element;
+  objectIsHidden: (result: ResourceObjectType) => boolean;
+};
+
+export default function ResourceObjectsAccordionsBuilder({
+  resources,
+  objectType,
+  sortResourcesBy: sortBy,
+  disclosureIsHidden,
+  objectIsHidden,
+  titleBuilder,
+  objectBuilder,
+}: Props) {
+  const sortedResources = useMemo(() => [...resources].sort(sortBy),
+    [resources, sortBy]);
+
+  return (
+    <Accordion>
+      {sortedResources.map((resource) => {
+
+        const resourceObjects =
+          objectType === 'videos' ? resource.videos :
+            objectType === 'links' ? resource.links :
+              objectType === 'files' ? resource.files :
+                objectType === 'accessibilityResults' ? resource.accessibilityResults?.results : null;
+
+
+
+        return (
+          <Disclosure
+            id={resource.identifier}
+            key={resource.identifier}
+            isHidden={disclosureIsHidden(resource)}
+          >
+            <DisclosureTitle>{titleBuilder(resource)}</DisclosureTitle>
+            <DisclosurePanel>
+              <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
+                {resourceObjects?.map((object, index) => {
+                  const objectComponent = useMemo(() => {
+                    return objectBuilder(object, resources)
+                  }, [object, resources, objectBuilder]);
+
+                  return (
+                    <li key={`${resource.identifier}-${index}`} id={`${resource.identifier}-${index}`} hidden={objectIsHidden(object)}>
+                      {objectComponent}
+                    </li>
+                  )
+                })}
+              </ul>
+            </DisclosurePanel>
+          </Disclosure>
+        );
+      })}
+    </Accordion>
+  );
+}
+
+/*
+<Accordion>
+  {resources
+    .sort((a, b) => a.title.localeCompare(b.title))
+    .map((resource) => {
+
+
+      const filteredResultsCount = resourceResults.filter((result) =>
+        selectedResultTypes.includes(result.type),
+      ).length;
+
+      return (
+        <Disclosure
+          id={resource.identifier}
+          key={resource.identifier}
+          isHidden={
+            resourceResults.length === 0 ||
+            filteredResultsCount === 0 ||
+            !selectedResourceTypes.includes(
+              resource.clarifiedType || "tbd",
+            ) ||
+            (showFromPublishedParentOnly && !resource.published) ||
+            (showFromInModuleParentOnly &&
+              resource.moduleTitle === undefined)
+          }
+        >
+          <DisclosureTitle>
+            <Grid columns={["5fr", "1fr"]} gap="size-100" width="90vw">
+              <Grid columns={["1fr"]} gap="size-50">
+                {resource.title} (in module:{" "}
+                {resource.moduleTitle ?? "N/A"})
+              </Grid>
+              <Flex gap="size-50">
+                <Badge variant="neutral">
+                  {capitalize(resource.clarifiedType!)}
+                </Badge>
+                {resource.published
+                  ? QC_BADGES.publishStatus.published
+                  : QC_BADGES.publishStatus.unpublished}
+              </Flex>
+            </Grid>
+          </DisclosureTitle>
+          <DisclosurePanel>
+            <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
+              <li id={`${resource.identifier}-${Math.random() * 1000}`}>
+                {resourceResults.map((result) => (
+                  <AccessibilityResultDisplay
+                    key={result.id}
+                    type={result.type}
+                    result={result}
+                    selectedResultTypes={selectedResultTypes}
+                    selectedParentResourceTypes={selectedResourceTypes}
+                    resources={resources}
+                  />
+                ))}
+              </li>
+            </ul>
+          </DisclosurePanel>
+        </Disclosure>
+      );
+    })}
+</Accordion>*/

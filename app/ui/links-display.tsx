@@ -4,10 +4,8 @@ import {
   Disclosure,
   DisclosureTitle,
   DisclosurePanel,
-  Checkbox,
   Flex,
   Link,
-  CheckboxGroup,
   Badge,
   Grid,
   Text,
@@ -68,7 +66,7 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
   const [selectedLinkTypes, setSelectedLinkTypes] = useState([
     ...allFoundLinkTypes,
   ]);
-  const [selectedParentResourceTypes, setSelectedParentResourceTypes] =
+  const [selectedParentResourceTypes] =
     useState([...allFoundParentResourceTypes]);
   const [showFromPublishedParentOnly, setShowFromPublishedParentOnly] =
     useState(false);

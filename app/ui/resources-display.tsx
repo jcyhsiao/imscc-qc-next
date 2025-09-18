@@ -10,18 +10,24 @@ import {
   View,
   Text,
 } from "@adobe/react-spectrum";
-import { getReadableType } from "@/app/lib/imscc-handling";
 import { capitalize } from "@/app/ui/helpers";
+import { useMemo } from 'react';
 
 export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
-  const groupedByType = resources.reduce(
-    (acc, item) => {
-      const typeLabel = getReadableType(item.clarifiedType);
-      if (typeLabel) (acc[typeLabel] = acc[typeLabel] || []).push(item);
-      return acc;
-    },
-    {} as { [key: string]: Resource[] },
-  );
+
+  const { allResourcesByType } = useMemo(() => {
+    const resourcesTypes = resources.map(resource => resource.clarifiedType || 'tbd');
+    const resourcesTypesSet = new Set(resourcesTypes);
+
+    const resourcesByType: Record<string, Resource[]> = {};
+    Array.from(resourcesTypesSet).forEach(type =>
+      resourcesByType[type] = resources
+        .filter(resource => (resource.clarifiedType || 'tbd') === type)
+        .sort((a, b) => a.title.localeCompare(b.title))
+    );
+
+    return { allResourcesByType: resourcesByType };
+  }, [resources]);
 
   return (
     <>
@@ -32,7 +38,7 @@ export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
         </Text>
       </View>
       <Accordion>
-        {Object.entries(groupedByType).map(([type, items]) => (
+        {Object.entries(allResourcesByType).map(([type, items]) => (
           <Disclosure id={type} key={type}>
             <DisclosureTitle>
               {capitalize(type)} ({items.length})
@@ -40,7 +46,6 @@ export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
             <DisclosurePanel>
               <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
                 {items
-                  .sort((a, b) => a.title.localeCompare(b.title))
                   .map((item) => (
                     <li key={item.identifier}>
                       <ResourceItemDisplay resource={item} />

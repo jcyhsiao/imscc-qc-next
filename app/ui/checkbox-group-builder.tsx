@@ -6,6 +6,7 @@ type Props = {
   name: string;
   values: string[];
   valuesCounts?: { [key: string]: number };
+  skippedValues?: string[];
   valuesLabelsOverrides?: { [key: string]: string };
   selectedValues: string[];
   onChange: (newSelectedValues: string[]) => void;
@@ -16,6 +17,7 @@ export default function CheckboxGroupBuilder({
   name,
   values,
   valuesCounts,
+  skippedValues,
   valuesLabelsOverrides,
   selectedValues,
   onChange: setSelectedValues,
@@ -27,7 +29,9 @@ export default function CheckboxGroupBuilder({
       value={selectedValues}
       onChange={setSelectedValues}
     >
-      {Array.from(values).map((option) => {
+      {Array.from(values).flatMap((option) => {
+        if (skippedValues?.includes(option)) return [];
+
         const valueCount =
           valuesCounts && valuesCounts[option] !== undefined
             ? valuesCounts[option]
