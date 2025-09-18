@@ -20,6 +20,7 @@ import {
 import React, { useState, useMemo } from "react";
 import { capitalize, QC_BADGES } from "@/app/ui/helpers";
 import CheckboxGroupBuilder from "@/app/ui/checkbox-group-builder";
+import ResourceAccordionTitle from "@/app/ui/resource-accordion-title";
 // import ResourceObjectsAccordionsBuilder from "./resource-objects-accordions-builder";
 
 export function AccessibilityResultsDisplay({
@@ -147,7 +148,7 @@ export function AccessibilityResultsDisplay({
                 isHidden={isHidden}
               >
                 <DisclosureTitle>
-                  <AccessibilityResultTitle resource={resource} />
+                  <ResourceAccordionTitle resource={resource} />
                 </DisclosureTitle>
                 <DisclosurePanel>
                   <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
@@ -186,25 +187,6 @@ type AccessibilityResultDisplayProps = {
   // selectedParentResourceTypes: string[];
   // resources: Resource[];
 };
-
-export const AccessibilityResultTitle = React.memo(function AccessibilityResultTitle({resource}: {resource: Resource}) {
-  return (
-    <Grid columns={["5fr", "1fr"]} gap="size-100" width="90vw">
-      <Grid columns={["1fr"]} gap="size-50">
-        {resource.title} (in module:{" "}
-        {resource.moduleTitle ?? "N/A"})
-      </Grid>
-      <Flex gap="size-50">
-        <Badge variant="neutral">
-          {capitalize(resource.clarifiedType!)}
-        </Badge>
-        {resource.published
-          ? QC_BADGES.publishStatus.published
-          : QC_BADGES.publishStatus.unpublished}
-      </Flex>
-    </Grid>
-  );
-});
 
 export const AccessibilityResultDisplay = React.memo(function AccessibilityResultDisplay({
   type,

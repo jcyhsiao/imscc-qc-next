@@ -15,8 +15,9 @@ import {
 // import { Accordion, Disclosure, DisclosureTitle, DisclosurePanel } from '@adobe/react-spectrum';
 import { capitalize, QC_BADGES } from "@/app/ui/helpers";
 import { getResourceByIdentifier } from "@/app/lib/imscc-handling";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import CheckboxGroupBuilder from "@/app/ui/checkbox-group-builder";
+import ResourceAccordionTitle from "@/app/ui/resource-accordion-title";
 
 type LinksDisplayProps = {
   resources: Resource[];
@@ -31,49 +32,52 @@ const isOSULibrariesLink = (link: LinkObject): boolean => {
 };
 
 export function LinksDisplay({ resources }: LinksDisplayProps) {
-  const allFoundLinks: LinkObject[] = [];
-  resources.forEach((resource) => {
-    allFoundLinks.push(...resource.links);
-  });
 
-  const allFoundLinkTypes = new Set(
-    allFoundLinks.map((link) => link.type.toString()),
-  );
+  const { allSortedResources, allFoundLinkTypes, allFoundLinksCountsByType, allFoundLinksResourceTypes, allFoundLinksCountsByResourceType } = useMemo(() => {
+    const allResourcesIDandType: Record<string, string> = {};
+    const foundLinks: LinkObject[] = [];
+    const foundLinksResourceTypes = new Set<string>();
+    const foundLinksCountsByResourceType: Record<string, number> = {};
 
-  const countsByType: { [key: string]: number } = {};
-  Array.from(allFoundLinkTypes).forEach((type) => {
-    countsByType[type] = allFoundLinks.filter(
-      (link) => link.type.toString() === type,
-    ).length;
-  });
+    resources.forEach(resource => {
+      if (resource.links.length === 0) return;
 
-  const allResourcesWithLinks = resources.filter(
-    (resource) => resource.links.length > 0,
-  );
-  const allFoundParentResourceTypes = new Set(
-    allResourcesWithLinks.map((resource) => resource.clarifiedType || "tbd"),
-  );
+      const linkResourceType = resource.clarifiedType || 'tbd';
 
-  const countsByParentResourceType: { [key: string]: number } = {};
-  Array.from(allFoundParentResourceTypes).forEach((type) => {
-    countsByParentResourceType[type] = allFoundLinks.filter(
-      (link) =>
-        getResourceByIdentifier(resources, link.parentResourceIdentifier)
-          ?.clarifiedType === type,
-    ).length;
-  });
+      foundLinks.push(...resource.links);
+      allResourcesIDandType[resource.identifier] = allResourcesIDandType[linkResourceType];
+      foundLinksResourceTypes.add(linkResourceType);
+      foundLinksCountsByResourceType[linkResourceType] = (foundLinksCountsByResourceType[linkResourceType] || 0) + 1;
+    });
+
+    const foundLinksTypes = new Set(foundLinks.map(link => link.type.toString()));
+    const foundLinksCountsByType: Record<string, number> = {};
+    foundLinksTypes.forEach(type => 
+      foundLinksCountsByType[type] = foundLinks.filter(link => link.type === type).length
+    );
+
+    const sortedResources = resources.sort((a, b) => a.title.localeCompare(b.title))
+    .filter(resource => resource.links.length >= 0);
+
+    return {
+      allFoundLinkTypes: foundLinksTypes,
+      allFoundLinksCountsByType: foundLinksCountsByType,
+      allFoundLinksResourceTypes: foundLinksResourceTypes,
+      allFoundLinksCountsByResourceType: foundLinksCountsByResourceType,
+      allSortedResources: sortedResources
+    }
+  }, [resources]);
 
   const [selectedLinkTypes, setSelectedLinkTypes] = useState([
     ...allFoundLinkTypes,
   ]);
-  const [selectedParentResourceTypes] =
-    useState([...allFoundParentResourceTypes]);
-  const [showFromPublishedParentOnly, setShowFromPublishedParentOnly] =
+  const [selectedResourceTypes, setSelectedResourceTypes] =
+    useState([...allFoundLinksResourceTypes]);
+  const [showFromPublishedResourcesOnly, setShowFromPublishedResourcesOnly] =
     useState(false);
   const [showOSULibrariesLinksOnly, setShowOSULibrariesLinksOnly] =
     useState(false);
 
-  console.log(countsByParentResourceType);
   return (
     <>
       <View>
@@ -88,26 +92,25 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
           name="link type"
           values={Array.from(allFoundLinkTypes)}
           valuesLabelsOverrides={{ osu: "OSU" }}
-          valuesCounts={countsByType}
+          valuesCounts={allFoundLinksCountsByType}
           selectedValues={selectedLinkTypes}
-          onChange={(newSelectedLinkTypes: typeof selectedLinkTypes) =>
+          onChange={newSelectedLinkTypes =>
             setSelectedLinkTypes(newSelectedLinkTypes)
           }
         />
         <CheckboxGroupBuilder
-          label="Found in Parent Resource"
-          name="parent resource type"
-          values={Array.from(allFoundParentResourceTypes)}
+          label="Found in Resource"
+          name="resource type"
+          values={Array.from(allFoundLinksResourceTypes)}
           valuesLabelsOverrides={{ osu: "OSU" }}
-          valuesCounts={countsByParentResourceType}
-          selectedValues={selectedParentResourceTypes}
-          onChange={(
-            newSelectedParentResourceTypes: typeof selectedParentResourceTypes,
-          ) => setSelectedLinkTypes(newSelectedParentResourceTypes)}
+          valuesCounts={allFoundLinksCountsByResourceType}
+          selectedValues={selectedResourceTypes}
+          onChange={
+            newSelectedParentResourceTypes => setSelectedResourceTypes(newSelectedParentResourceTypes)}
         />
         <Switch
-          isSelected={showFromPublishedParentOnly}
-          onChange={setShowFromPublishedParentOnly}
+          isSelected={showFromPublishedResourcesOnly}
+          onChange={setShowFromPublishedResourcesOnly}
         >
           Show Published Items Only
         </Switch>
@@ -119,9 +122,7 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
         </Switch>
       </Flex>
       <Accordion>
-        {allResourcesWithLinks
-          .sort((a, b) => a.title.localeCompare(b.title))
-          .map((resource) => {
+        {allSortedResources.map((resource) => {
             let filteredLinksCount = 0;
             filteredLinksCount += resource.links.filter((link) =>
               selectedLinkTypes.includes(link.type.toString()),
@@ -135,53 +136,45 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
               ).length;
             }
 
+            const isHidden = filteredLinksCount <= 0 ||
+                  (resource.clarifiedType !== undefined &&
+                    !selectedResourceTypes.includes(
+                      resource.clarifiedType,
+                    )) ||
+                  (showFromPublishedResourcesOnly && !resource.published);
+                
             return (
               <Disclosure
                 id={resource.identifier}
                 key={resource.identifier}
-                isHidden={
-                  filteredLinksCount <= 0 ||
-                  (resource.clarifiedType !== undefined &&
-                    !selectedParentResourceTypes.includes(
-                      resource.clarifiedType,
-                    )) ||
-                  (showFromPublishedParentOnly && !resource.published)
-                }
+                isHidden={isHidden}
               >
                 <DisclosureTitle>
-                  <Grid columns={["5fr", "1fr"]} gap="size-100" width="90vw">
-                    <Text>{resource.title}</Text>
-                    <Flex gap="size-100" justifyContent="end">
-                      <Badge variant="neutral">
-                        {capitalize(resource.clarifiedType!)}
-                      </Badge>
-                      {resource.published
-                        ? QC_BADGES.publishStatus.published
-                        : QC_BADGES.publishStatus.unpublished}
-                    </Flex>
-                  </Grid>
+                  <ResourceAccordionTitle resource={resource} />
                 </DisclosureTitle>
                 <DisclosurePanel>
                   <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
-                    {resource.links.map((link) => (
-                      <li key={`${link.text}-rand${Math.random() * 1000}`}>
-                        <LinkDisplay
-                          link={link}
-                          isHidden={
-                            !selectedLinkTypes.includes(link.type.toString()) ||
+                    {resource.links.map((link, index) => {
+                      const isHidden = 
+                      !selectedLinkTypes.includes(link.type.toString()) ||
                             (selectedLinkTypes.includes("osu") &&
                               showOSULibrariesLinksOnly &&
                               !isOSULibrariesLink(link)) ||
-                            !selectedParentResourceTypes.includes(
+                            !selectedResourceTypes.includes(
                               getResourceByIdentifier(
                                 resources,
                                 link.parentResourceIdentifier,
                               )?.clarifiedType || "tbd",
-                            )
-                          }
+                            );
+
+                      return (
+                      <li key={`${link.text}-${index}`} id={`${link.text}-${index}`}>
+                        <LinkDisplay
+                          link={link}
+                          isHidden={isHidden}
                         />
                       </li>
-                    ))}
+                    )})}
                   </ul>
                 </DisclosurePanel>
               </Disclosure>
@@ -211,6 +204,7 @@ function LinkDisplay({ link, isHidden }: LinkDisplayProps) {
     </View>
   );
 }
+
 
 // Cool code
 

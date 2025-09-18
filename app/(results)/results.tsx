@@ -8,8 +8,9 @@ import { EnhancedAxeResults } from '@/app/lib/definitions';
 
 import CourseStructureTab from '@/app/(results)/course-structure';
 import CourseResourcesTab from '@/app/(results)/course-resources';
-import CourseLinksTab from './course-links';
-import AccessibilityCheckTab from './accessibility-check';
+import CourseLinksTab from '@/app/(results)/course-links';
+import AccessibilityCheckTab from '@/app/(results)/accessibility-check';
+import CourseAttachmentsTab from '@/app/(results)/course-attachments';
 
 type Props = {
     selectedFile?: File | null;
@@ -113,7 +114,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                                     <CourseLinksTab resources={allResources} />
                                 </Item>
                                 <Item key="files">
-                                    Alea jacta est.
+                                    <CourseAttachmentsTab resources={allResources } />
                                 </Item>
                                 <Item key="videos">
                                     Alea jacta est.
