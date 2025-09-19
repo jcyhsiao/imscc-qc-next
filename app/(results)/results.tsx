@@ -10,6 +10,7 @@ import CourseResourcesTab from '@/app/(results)/course-resources';
 import CourseLinksTab from '@/app/(results)/course-links';
 import AccessibilityCheckTab from '@/app/(results)/accessibility-check';
 import CourseAttachmentsTab from '@/app/(results)/course-attachments';
+import CourseVideosTab from '@/app/(results)/course-videos';
 
 type Props = {
     selectedFile?: File | null;
@@ -116,7 +117,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                                     <CourseAttachmentsTab resources={allResources } />
                                 </Item>
                                 <Item key="videos">
-                                    Alea jacta est.
+                                    <CourseVideosTab resources={allResources} />
                                 </Item>
                                 <Item key="exports">
                                     Alea jacta est.

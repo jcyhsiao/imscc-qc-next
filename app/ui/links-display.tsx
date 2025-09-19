@@ -165,7 +165,7 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
                         !isOSULibrariesLink(link)) ||
                       !selectedResourceTypes.includes(
                         allResourcesWithLinksIDAndType[
-                          link.parentResourceIdentifier]
+                        link.parentResourceIdentifier]
                       );
 
                     return (
@@ -198,7 +198,7 @@ function LinkDisplay({ link, isHidden }: LinkDisplayProps) {
     <View padding={"size-100"} isHidden={isHidden}>
       <Text>
         {QC_BADGES.linkType[link.type]} {link.text} [
-        <Link href="{link.url}" target="_blank">
+        <Link href={link.url} target="_blank">
           {link.url}
         </Link>
         ]

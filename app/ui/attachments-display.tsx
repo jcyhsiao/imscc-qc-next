@@ -55,7 +55,7 @@ export function AttachmentsDisplay({ resources }: { resources: Resource[] }) {
 
   return (
     <>
-      <Text>Note: some regular links repurposed from previously attachment links may show up here as well.</Text>
+      <Text>Notes: Some regular links repurposed from previously attachment links may show up here as well. To ensure document accessibility, use the Ally tool in CarmenCanvas.</Text>
       <Flex gap='size-300'>
         <CheckboxGroupBuilder
           label='File Type'

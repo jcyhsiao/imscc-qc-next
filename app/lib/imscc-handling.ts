@@ -375,6 +375,7 @@ export async function inventoryIMSCCManifest(
       attachments: [],
       accessibilityResults: null,
     });
+
   }
 
   return allResources;
@@ -794,7 +795,7 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
   // doc.querySelectorAll('video').forEach(video => {
   videoElements.forEach((video) => {
     // const classes = (video.className || '').toLowerCase();
-    const title = video.title || "(Title Not Found)";
+    const title = video.title || "(REMEDIATE: Title Not Found)";
     const source = video.querySelector("source");
     const src = source?.src || "";
     const platform: string = "Instructure";
@@ -835,26 +836,26 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
   const iFrameElements = Array.from(doc.getElementsByTagName("iframe"));
   // doc.querySelectorAll('iframe').forEach(iframe => {
   iFrameElements.forEach((iframe) => {
-    const src = (iframe.src || "").toLowerCase();
-    const title = iframe.title || "(Title Not Found)";
-    let platform = "Unknown";
+    const src = (iframe.src || "");
+    const title = iframe.title || "(REMEDIATE: Title Not Found)";
+    let platform = "unknown";
     const type = "embed";
-    if (src.includes("www.youtube.com/embed/")) platform = "YouTube";
-    else if (src.includes("player.vimeo.com")) platform = "Vimeo";
+    if (src.includes("www.youtube.com/embed/")) platform = "youtube";
+    else if (src.includes("player.vimeo.com")) platform = "vimeo";
     else if (
       src.includes("https://mediasite.osu.edu/mediasite/lti/home/coverplay") ||
       src.includes("mediasite.osu.edu/mediasite/play")
     )
-      platform = "Mediasite";
-    else if (src.includes("echo360.com/media")) platform = "Echo360";
-    else if (src.includes("osucon.hosted.panopto.com")) platform = "Panopto";
+      platform = "mediasite";
+    else if (src.includes("echo360.com/media")) platform = "echo360";
+    else if (src.includes("osucon.hosted.panopto.com")) platform = "panopto";
     else if (
       src.includes("instructuremedia.com") ||
       src.includes("media_attachments_iframe")
     )
-      platform = "Instructure";
+      platform = "instructure";
 
-    if (platform != "Unknown") {
+    if (platform != "unknown") {
       const traverseRootTag =
         iframe.parentElement instanceof HTMLParagraphElement
           ? iframe.parentElement
@@ -887,26 +888,26 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
   const aElements = Array.from(doc.getElementsByTagName("a"));
   // doc.querySelectorAll('a').forEach(a => {
   aElements.forEach((a) => {
-    const src = (a.href || "").toLowerCase();
+    const src = (a.href || "");
     const title = a.text || "(Title Not Found)";
-    let platform = "Unknown";
+    let platform = "unknown";
     const type = "link";
     if (src.includes("www.youtube.com/watch") || src.includes("youtu.be"))
-      platform = "YouTube";
-    else if (src.includes("vimeo.com")) platform = "Vimeo";
+      platform = "youtube";
+    else if (src.includes("vimeo.com")) platform = "vimeo";
     else if (src.includes("mediasite.osu.edu/mediasite/play"))
-      platform = "Mediasite";
+      platform = "mediasite";
     else if (src.includes("external_tools"))
-      platform = "External Tool (potentially Mediasite";
-    else if (src.includes("echo360.org/media")) platform = "Echo360";
-    else if (src.includes("osucon.hosted.panopto.com")) platform = "Panopto";
+      platform = "lti";
+    else if (src.includes("echo360.org/media")) platform = "echo360";
+    else if (src.includes("osucon.hosted.panopto.com")) platform = "panopto";
     else if (
       src.includes("instructuremedia.com") ||
       src.includes("media_attachments_iframe")
     )
-      platform = "Instructure";
+      platform = "instructure";
 
-    if (platform != "Unknown") {
+    if (platform != "unknown") {
       const traverseRootTag =
         a.parentElement instanceof HTMLParagraphElement ? a.parentElement : a;
 

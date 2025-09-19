@@ -45,36 +45,36 @@ export function capitalize(s: string): string {
 
 export function getIconForItemType(type: string): JSX.Element {
   const ariaLabel = getReadableType(type) || "unknown type";
-  const sharedProps = { strokeWidth: 1, ariaLabel: { ariaLabel } };
+  const sharedProps = { strokeWidth: 1 };
   let icon: JSX.Element;
 
   switch (type) {
     case "contextmodulesubheader":
-      icon = <Heading {...sharedProps} />;
+      icon = <Heading aria-label={ariaLabel} {...sharedProps} />;
       break;
     case "assignment":
-      icon = <BookA {...sharedProps} />;
+      icon = <BookA aria-label={ariaLabel} {...sharedProps} />;
       break;
     case "page":
-      icon = <NotebookText {...sharedProps} />;
+      icon = <NotebookText aria-label={ariaLabel} {...sharedProps} />;
       break;
     case "externalurl":
-      icon = <LRLink {...sharedProps} />;
+      icon = <LRLink aria-label={ariaLabel} {...sharedProps} />;
       break;
     case "survey":
-      icon = <MessageCircleQuestionMark {...sharedProps} />;
+      icon = <MessageCircleQuestionMark aria-label={ariaLabel} {...sharedProps} />;
       break;
     case "quiz":
-      icon = <BookCheck {...sharedProps} />;
+      icon = <BookCheck aria-label={ariaLabel} {...sharedProps} />;
       break;
     case "announcement":
-      icon = <Megaphone {...sharedProps} />;
+      icon = <Megaphone aria-label={ariaLabel} {...sharedProps} />;
       break;
     case "discussion":
-      icon = <MessagesSquare {...sharedProps} />;
+      icon = <MessagesSquare aria-label={ariaLabel} {...sharedProps} />;
       break;
     default:
-      icon = <FileQuestionMark {...sharedProps} />;
+      icon = <FileQuestionMark aria-label={ariaLabel} {...sharedProps} />;
   }
 
   return icon;
