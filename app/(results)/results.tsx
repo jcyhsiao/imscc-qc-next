@@ -96,7 +96,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                                 <Item key="rsc">Resources</Item>
                                 <Item key="ally">Accessibility</Item>
                                 <Item key="links">Links</Item>
-                                <Item key="files">File Attachments</Item>
+                                <Item key="attachments">File Attachments</Item>
                                 <Item key="videos">Videos</Item>
                                 <Item key="exports">Export</Item>
                             </TabList>
@@ -113,7 +113,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                                 <Item key="links">
                                     <CourseLinksTab resources={allResources} />
                                 </Item>
-                                <Item key="files">
+                                <Item key="attachments">
                                     <CourseAttachmentsTab resources={allResources } />
                                 </Item>
                                 <Item key="videos">

@@ -28,13 +28,23 @@ export function AccessibilityResultsDisplay({
 }: {
   resources: Resource[];
 }) {
-  const { sortedResources, allResourcesIDandType, allResultTypes, allResourceTypes, allCountsByResultType, allCountsByResourceType, allResourceCountsByResultType } = useMemo(() => {
-    const resourcesIDandType: Record<string, string> = {};
-    const resourceTypeSet = new Set<string>();
+  const { sortedResources, allResourcesWithResultsIDAndType, allResourcesWithResultsResourceTypes, allResourcesWithResultsResultTypes, allResourceCountsByResourceType, allResultsCountsByResultType, allResultsCountsByResourceType, allResourceCountsByResultType } = useMemo(() => {
+    // NOTE: we are already excluding inapplicable in imscc-handling
+    const omittedResourceTypes = ['modulelink'];
 
-    resources.forEach(resource => {
-      resourcesIDandType[resource.identifier] = resource.clarifiedType || 'tbd'
-      resourceTypeSet.add(resource.clarifiedType || 'tbd');
+    const resourcesWithResultsSorted = resources
+      .sort((a, b) => a.title.localeCompare(b.title))
+      .filter(resource => (resource.accessibilityResults?.results.length || 0) > 0)
+      .filter(resource => !omittedResourceTypes.includes(resource.clarifiedType || 'tbd'));
+
+    const resourcesWithResultsIDAndType: Record<string, string> = {};
+    const resourcesWithResultsResourceTypesSet = new Set<string>();
+    const resourceCountsByResourceType: Record<string, number> = {};
+
+    resourcesWithResultsSorted.forEach(resource => {
+      resourcesWithResultsIDAndType[resource.identifier] = resource.clarifiedType || 'tbd'
+      resourcesWithResultsResourceTypesSet.add(resource.clarifiedType || 'tbd');
+      resourceCountsByResourceType[resource.clarifiedType || 'tbd'] = (resourceCountsByResourceType[resource.clarifiedType || 'tbd'] || 0) + 1;
     });
 
     const results = resources
@@ -43,21 +53,20 @@ export function AccessibilityResultsDisplay({
     // .filter(result => result.type !== 'inapplicable');
 
     //   const resultsTypes = results.flatMap(result => result.type as AccessibilityResultType);
-    const resultsTypesSet = new Set<AccessibilityResultType>();
-    const countsByResultType: Record<string, number> = {};
-    const countsByResourceType: Record<string, number> = {};
-
+    const resourcesWithResultsResultsTypesSet = new Set<AccessibilityResultType>();
+    const resultsCountsByResultType: Record<string, number> = {};
+    const resultsCountsByResourceType: Record<string, number> = {};
     const resourceCountsByResultType: Record<string, Record<string, number>> = {};
 
     results.forEach(result => {
       // Count by result type
-      resultsTypesSet.add(result.type as AccessibilityResultType);
-      countsByResultType[result.type] = (countsByResultType[result.type] || 0) + 1;
+      resourcesWithResultsResultsTypesSet.add(result.type as AccessibilityResultType);
+      resultsCountsByResultType[result.type] = (resultsCountsByResultType[result.type] || 0) + 1;
 
       // Count by resource type
-      const resourceType = resourcesIDandType[result.parentResourceIdentifier];
+      const resourceType = resourcesWithResultsIDAndType[result.parentResourceIdentifier];
       if (resourceType) { // Ensure parentResourceType is found
-        countsByResourceType[resourceType] = (countsByResourceType[resourceType] || 0) + 1;
+        resultsCountsByResourceType[resourceType] = (resultsCountsByResourceType[resourceType] || 0) + 1;
       }
 
       // Count by result type for each resource
@@ -65,16 +74,15 @@ export function AccessibilityResultsDisplay({
       resourceCountsByResultType[result.parentResourceIdentifier][result.type] = (resourceCountsByResultType[result.parentResourceIdentifier][result.type] || 0) + 1;
     });
 
-    const sorted = resources.sort((a, b) => a.title.localeCompare(b.title));
-
     return {
-      sortedResources: sorted,
-      allResultTypes: resultsTypesSet,
-      allResourceTypes: resourceTypeSet,
-      allResourcesIDandType: resourcesIDandType,
-      allCountsByResultType: countsByResultType,
-      allCountsByResourceType: countsByResourceType,
+      sortedResources: resourcesWithResultsSorted,
+      allResourcesWithResultsResultTypes: resourcesWithResultsResultsTypesSet,
+      allResourcesWithResultsResourceTypes: resourcesWithResultsResourceTypesSet,
+      allResourcesWithResultsIDAndType: resourcesWithResultsIDAndType,
+      allResultsCountsByResultType: resultsCountsByResultType,
+      allResultsCountsByResourceType: resultsCountsByResourceType,
       allResourceCountsByResultType: resourceCountsByResultType,
+      allResourceCountsByResourceType: resourceCountsByResourceType,
     }
   }, [resources]);
 
@@ -82,7 +90,7 @@ export function AccessibilityResultsDisplay({
     "violations",
   ]);
   const [selectedResourceTypes, setSelectedResourceTypes] = useState([
-    ...allResourceTypes,
+    ...allResourcesWithResultsResourceTypes,
   ]);
   const [showFromPublishedResourcesOnly, setShowFromPublishedResourcesOnly] =
     useState(false);
@@ -91,12 +99,14 @@ export function AccessibilityResultsDisplay({
 
   return (
     <>
+      <Text>Note: This does not currently check the syllabus page.</Text>
+
       <Flex gap="size-300">
         <CheckboxGroupBuilder
           label="Result Types"
           name="result types"
-          values={Array.from(allResultTypes)}
-          valuesCounts={allCountsByResultType}
+          values={Array.from(allResourcesWithResultsResultTypes)}
+          valuesCounts={allResultsCountsByResultType}
           skippedValues={['inapplicable']}
           valuesLabelsOverrides={{ incomplete: "Investigate" }}
           selectedValues={selectedResultTypes}
@@ -107,8 +117,8 @@ export function AccessibilityResultsDisplay({
         <CheckboxGroupBuilder
           label="Found in Resource"
           name="resource type"
-          values={Array.from(allResourceTypes)}
-          valuesCounts={allCountsByResourceType}
+          values={Array.from(allResourcesWithResultsResourceTypes)}
+          valuesCounts={allResourceCountsByResourceType}
           selectedValues={selectedResourceTypes}
           onChange={(newSelectedResourceTypes: typeof selectedResourceTypes) =>
             setSelectedResourceTypes(newSelectedResourceTypes)
@@ -158,7 +168,7 @@ export function AccessibilityResultsDisplay({
 
                       const isHidden =
                         !(selectedResultTypes.includes(result.type) &&
-                          selectedResourceTypes.includes(allResourcesIDandType[result.parentResourceIdentifier]));
+                          selectedResourceTypes.includes(allResourcesWithResultsIDAndType[result.parentResourceIdentifier]));
 
                       return (
                         <li key={`${resource.identifier}-${index}`} id={`${resource.identifier}-${index}`} hidden={isHidden}>

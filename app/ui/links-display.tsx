@@ -33,8 +33,8 @@ const isOSULibrariesLink = (link: LinkObject): boolean => {
 
 export function LinksDisplay({ resources }: LinksDisplayProps) {
 
-  const { allSortedResources, allFoundLinkTypes, allFoundLinksCountsByType, allFoundLinksResourceTypes, allFoundLinksCountsByResourceType } = useMemo(() => {
-    const allResourcesIDandType: Record<string, string> = {};
+  const { allResourcesWithLinksSorted, allFoundLinkTypes, allFoundLinksCountsByType, allFoundLinksResourceTypes, allFoundLinksCountsByResourceType } = useMemo(() => {
+    // const resourcesWithLinksIDAndType: Record<string, string> = {};
     const foundLinks: LinkObject[] = [];
     const foundLinksResourceTypes = new Set<string>();
     const foundLinksCountsByResourceType: Record<string, number> = {};
@@ -45,26 +45,26 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
       const linkResourceType = resource.clarifiedType || 'tbd';
 
       foundLinks.push(...resource.links);
-      allResourcesIDandType[resource.identifier] = allResourcesIDandType[linkResourceType];
+      // resourcesWithLinksIDAndType[resource.identifier] = resourcesWithLinksIDAndType[linkResourceType];
       foundLinksResourceTypes.add(linkResourceType);
       foundLinksCountsByResourceType[linkResourceType] = (foundLinksCountsByResourceType[linkResourceType] || 0) + 1;
     });
 
     const foundLinksTypes = new Set(foundLinks.map(link => link.type.toString()));
     const foundLinksCountsByType: Record<string, number> = {};
-    foundLinksTypes.forEach(type => 
+    foundLinksTypes.forEach(type =>
       foundLinksCountsByType[type] = foundLinks.filter(link => link.type === type).length
     );
 
-    const sortedResources = resources.sort((a, b) => a.title.localeCompare(b.title))
-    .filter(resource => resource.links.length >= 0);
+    const resourcesWithLinksSorted = resources.sort((a, b) => a.title.localeCompare(b.title))
+      .filter(resource => resource.links.length >= 0);
 
     return {
       allFoundLinkTypes: foundLinksTypes,
       allFoundLinksCountsByType: foundLinksCountsByType,
       allFoundLinksResourceTypes: foundLinksResourceTypes,
       allFoundLinksCountsByResourceType: foundLinksCountsByResourceType,
-      allSortedResources: sortedResources
+      allResourcesWithLinksSorted: resourcesWithLinksSorted
     }
   }, [resources]);
 
@@ -75,6 +75,7 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
     useState([...allFoundLinksResourceTypes]);
   const [showFromPublishedResourcesOnly, setShowFromPublishedResourcesOnly] =
     useState(false);
+  const [showFromInModuleResourcesOnly, setShowFromInModuleResourcesOnly] = useState(false);
   const [showOSULibrariesLinksOnly, setShowOSULibrariesLinksOnly] =
     useState(false);
 
@@ -102,84 +103,89 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
           label="Found in Resource"
           name="resource type"
           values={Array.from(allFoundLinksResourceTypes)}
-          valuesLabelsOverrides={{ osu: "OSU" }}
+          valuesLabelsOverrides={{ modulelink: "Module Link" }}
           valuesCounts={allFoundLinksCountsByResourceType}
           selectedValues={selectedResourceTypes}
           onChange={
             newSelectedParentResourceTypes => setSelectedResourceTypes(newSelectedParentResourceTypes)}
         />
-        <Switch
-          isSelected={showFromPublishedResourcesOnly}
-          onChange={setShowFromPublishedResourcesOnly}
-        >
-          Show Published Items Only
-        </Switch>
-        <Switch
-          isSelected={showOSULibrariesLinksOnly}
-          onChange={setShowOSULibrariesLinksOnly}
-        >
-          Show OSU Libraries Links Only
-        </Switch>
+        <Flex>
+          <Switch
+            isSelected={showFromPublishedResourcesOnly}
+            onChange={setShowFromPublishedResourcesOnly}
+          >
+            Show Published Items Only
+          </Switch>
+          <Switch isSelected={showFromInModuleResourcesOnly} onChange={setShowFromInModuleResourcesOnly}>
+            Show In-Module Items Only
+          </Switch>
+          <Switch
+            isSelected={showOSULibrariesLinksOnly}
+            onChange={setShowOSULibrariesLinksOnly}
+          >
+            Show OSU Libraries Links Only
+          </Switch>
+        </Flex>
       </Flex>
       <Accordion>
-        {allSortedResources.map((resource) => {
-            let filteredLinksCount = 0;
-            filteredLinksCount += resource.links.filter((link) =>
-              selectedLinkTypes.includes(link.type.toString()),
+        {allResourcesWithLinksSorted.map((resource) => {
+          if (resource.clarifiedType === 'modulelink') console.log(resource);
+
+          let filteredLinksCount = 0;
+          filteredLinksCount += resource.links.filter((link) =>
+            selectedLinkTypes.includes(link.type.toString()),
+          ).length;
+          if (
+            selectedLinkTypes.includes("osu") &&
+            showOSULibrariesLinksOnly
+          ) {
+            filteredLinksCount -= resource.links.filter(
+              (link) => !isOSULibrariesLink(link),
             ).length;
-            if (
-              selectedLinkTypes.includes("osu") &&
-              showOSULibrariesLinksOnly
-            ) {
-              filteredLinksCount -= resource.links.filter(
-                (link) => !isOSULibrariesLink(link),
-              ).length;
-            }
+          }
 
-            const isHidden = filteredLinksCount <= 0 ||
-                  (resource.clarifiedType !== undefined &&
-                    !selectedResourceTypes.includes(
-                      resource.clarifiedType,
-                    )) ||
-                  (showFromPublishedResourcesOnly && !resource.published);
-                
-            return (
-              <Disclosure
-                id={resource.identifier}
-                key={resource.identifier}
-                isHidden={isHidden}
-              >
-                <DisclosureTitle>
-                  <ResourceAccordionTitle resource={resource} />
-                </DisclosureTitle>
-                <DisclosurePanel>
-                  <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
-                    {resource.links.map((link, index) => {
-                      const isHidden = 
+          const isHidden = filteredLinksCount <= 0 ||
+            !(selectedResourceTypes.includes(resource.clarifiedType || 'tbd')) ||
+            (showFromPublishedResourcesOnly && !resource.published) ||
+            (showFromInModuleResourcesOnly && (resource.moduleTitle === undefined && resource.clarifiedType !== 'modulelink'));
+          return (
+            <Disclosure
+              id={resource.identifier}
+              key={resource.identifier}
+              isHidden={isHidden}
+            >
+              <DisclosureTitle>
+                <ResourceAccordionTitle resource={resource} />
+              </DisclosureTitle>
+              <DisclosurePanel>
+                <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
+                  {resource.links.map((link, index) => {
+                    const isHidden =
                       !selectedLinkTypes.includes(link.type.toString()) ||
-                            (selectedLinkTypes.includes("osu") &&
-                              showOSULibrariesLinksOnly &&
-                              !isOSULibrariesLink(link)) ||
-                            !selectedResourceTypes.includes(
-                              getResourceByIdentifier(
-                                resources,
-                                link.parentResourceIdentifier,
-                              )?.clarifiedType || "tbd",
-                            );
+                      (selectedLinkTypes.includes("osu") &&
+                        showOSULibrariesLinksOnly &&
+                        !isOSULibrariesLink(link)) ||
+                      !selectedResourceTypes.includes(
+                        getResourceByIdentifier(
+                          resources,
+                          link.parentResourceIdentifier,
+                        )?.clarifiedType || "tbd",
+                      );
 
-                      return (
+                    return (
                       <li key={`${link.text}-${index}`} id={`${link.text}-${index}`}>
                         <LinkDisplay
                           link={link}
                           isHidden={isHidden}
                         />
                       </li>
-                    )})}
-                  </ul>
-                </DisclosurePanel>
-              </Disclosure>
-            );
-          })}
+                    )
+                  })}
+                </ul>
+              </DisclosurePanel>
+            </Disclosure>
+          );
+        })}
       </Accordion>
     </>
   );

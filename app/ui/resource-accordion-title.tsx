@@ -8,11 +8,13 @@ export default function ResourceAccordionTitle({ resource }: { resource: Resourc
             <Text>{resource.title}</Text>
             <Flex gap="size-100" justifyContent="end">
                 <Badge variant="neutral">
-                    {capitalize(resource.clarifiedType!)}
+                    {capitalize(resource.clarifiedType === 'modulelink' ? 'Link' : resource.clarifiedType || 'tbd')}
                 </Badge>
-                {resource.published
-                    ? QC_BADGES.publishStatus.published
-                    : QC_BADGES.publishStatus.unpublished}
+                {resource.clarifiedType === 'modulelink'
+                    ? <Badge variant='info'>(In Module)</Badge>
+                    : resource.published
+                        ? QC_BADGES.publishStatus.published
+                        : QC_BADGES.publishStatus.unpublished}
             </Flex>
         </Grid>
     );

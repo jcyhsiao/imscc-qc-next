@@ -13,7 +13,7 @@ export interface Resource {
   analysisType: string | null;
   links: LinkObject[];
   videos: VideoObject[];
-  files: FileObject[];
+  attachments: FileObject[];
   accessibilityResults: EnhancedAxeResults | null;
 }
 

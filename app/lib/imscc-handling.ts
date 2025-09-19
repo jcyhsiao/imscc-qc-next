@@ -86,6 +86,7 @@ export async function inventoryIMSCCManifest(
     const resourceIdentifier =
       manifestResourceElement.getAttribute("identifier")!;
     const resourceHref = manifestResourceElement.getAttribute("href");
+    const resourceFileHref = manifestResourceElement.getElementsByTagName('file')?.[0].getAttribute('href');
     const resourceType = manifestResourceElement.getAttribute("type")!;
 
     // Skip supporting element
@@ -99,14 +100,8 @@ export async function inventoryIMSCCManifest(
     if (
       // LTIs
       resourceType === "imsbasiclti_xmlv1p3" ||
-      // Links in modules
-      // TODO: add support
-      resourceType === "imswl_xmlv1p1" ||
       // Question banks
       resourceHref?.includes("non_cc_assessments") ||
-      // Syllabus entry in manifest
-      // TODO: add support
-      resourceIdentifier.endsWith("_syllabus") ||
       // Course settings entry
       resourceHref?.includes("canvas_export.txt") ||
       // File
@@ -136,12 +131,48 @@ export async function inventoryIMSCCManifest(
       resourceType === "webcontent" &&
       resourceHref &&
       resourceHref.startsWith("wiki_content/");
+    const isSyllabus =
+      resourceIdentifier.endsWith("_syllabus") &&
+      resourceHref;
+    const isLink =
+      resourceType === 'imswl_xmlv1p1' &&
+      resourceFileHref;
 
     let resourceClarifiedType: string | null = null;
     let resourceIdentifierRef: string | null = null;
 
     // TODO: A lot of refactoring opportunities here
-    if (isPage) {
+    if (isLink) {
+      resourceClarifiedType = 'modulelink';
+      const linkContent = fileContents[resourceFileHref];
+      if (linkContent) {
+        const linkDoc = parser.parseFromString(
+          linkContent,
+          "application/xml",
+        );
+        resourceTitle = linkDoc.getElementsByTagName("title").length > 0
+          ? linkDoc.getElementsByTagName("title")[0].textContent ||
+          resourceTitle
+          : resourceTitle;
+      }
+      resourceAnalysisHref = resourceFileHref;
+    }
+    else if (isSyllabus) {
+      resourceClarifiedType = 'syllabus';
+      const pageContent = fileContents[resourceHref];
+      if (pageContent) {
+        const pageDoc = parser.parseFromString(pageContent, "text/html");
+        resourceTitle =
+          pageDoc.getElementsByTagName("title").length > 0
+            ? pageDoc.getElementsByTagName("title")[0].textContent ||
+            resourceTitle
+            : resourceTitle;
+        // This is not true; but we are keeping things simple for now
+        resourceStatus = true;
+      }
+      resourceAnalysisHref = resourceHref;
+    }
+    else if (isPage) {
       resourceClarifiedType = "page";
       const pageContent = fileContents[resourceHref];
       if (pageContent) {
@@ -150,7 +181,7 @@ export async function inventoryIMSCCManifest(
         resourceTitle =
           pageDoc.getElementsByTagName("title").length > 0
             ? pageDoc.getElementsByTagName("title")[0].textContent ||
-              resourceTitle
+            resourceTitle
             : resourceTitle;
         // resourceStatus = pageDoc.querySelector('meta[name="workflow_state"]')?.getAttribute('content') === 'active' ? 'active' : 'unpublished';
         const metaElements = Array.from(pageDoc.getElementsByTagName("meta"));
@@ -178,7 +209,7 @@ export async function inventoryIMSCCManifest(
         // resourceStatus = settingsDoc.querySelector('workflow_state')?.textContent === 'active' ? 'active' : 'unpublished';
         resourceStatus =
           settingsDoc.getElementsByTagName("workflow_state").length > 0 &&
-          settingsDoc.getElementsByTagName("workflow_state")[0].textContent ===
+            settingsDoc.getElementsByTagName("workflow_state")[0].textContent ===
             "active"
             ? true
             : false;
@@ -186,7 +217,7 @@ export async function inventoryIMSCCManifest(
         resourceTitle =
           settingsDoc.getElementsByTagName("title").length > 0
             ? settingsDoc.getElementsByTagName("title")[0].textContent ||
-              resourceTitle
+            resourceTitle
             : resourceTitle;
       }
       const assignmentHtmlPath = Object.keys(fileContents).find(
@@ -200,8 +231,8 @@ export async function inventoryIMSCCManifest(
       resourceIdentifierRef =
         manifestResourceElement.getElementsByTagName("dependency").length > 0
           ? manifestResourceElement
-              .getElementsByTagName("dependency")[0]
-              .getAttribute("identifierref")!
+            .getElementsByTagName("dependency")[0]
+            .getAttribute("identifierref")!
           : null;
       const matchingManifestResourceElement =
         findManifestResourceElementByIentifier(resourceIdentifierRef);
@@ -235,12 +266,12 @@ export async function inventoryIMSCCManifest(
           resourceTitle =
             itemMetaDoc.getElementsByTagName("title").length > 0
               ? itemMetaDoc.getElementsByTagName("title")[0].textContent ||
-                resourceTitle
+              resourceTitle
               : resourceTitle;
           // resourceStatus = itemMetaDoc.querySelector('available')?.textContent === 'true' ? 'active' : 'unpublished';
           resourceStatus =
             itemMetaDoc.getElementsByTagName("available").length > 0 &&
-            itemMetaDoc.getElementsByTagName("available")[0].textContent ===
+              itemMetaDoc.getElementsByTagName("available")[0].textContent ===
               "true"
               ? true
               : false;
@@ -270,15 +301,15 @@ export async function inventoryIMSCCManifest(
         resourceTitle =
           discussionDoc.getElementsByTagName("title").length > 0
             ? discussionDoc.getElementsByTagName("title")[0].textContent ||
-              resourceTitle
+            resourceTitle
             : resourceTitle;
 
         // const resourceIdentifierRef = manifestResourceElement.querySelector('dependency')!.getAttribute("identifierref")!;
         resourceIdentifierRef =
           manifestResourceElement.getElementsByTagName("dependency").length > 0
             ? manifestResourceElement
-                .getElementsByTagName("dependency")[0]
-                .getAttribute("identifierref")!
+              .getElementsByTagName("dependency")[0]
+              .getAttribute("identifierref")!
             : null;
         const matchingManifestResourceElement =
           findManifestResourceElementByIentifier(resourceIdentifierRef);
@@ -311,8 +342,8 @@ export async function inventoryIMSCCManifest(
             resourceStatus =
               itemSettingsDoc.getElementsByTagName("workflow_state").length >
                 0 &&
-              itemSettingsDoc.getElementsByTagName("workflow_state")[0]
-                .textContent === "active"
+                itemSettingsDoc.getElementsByTagName("workflow_state")[0]
+                  .textContent === "active"
                 ? true
                 : false;
           }
@@ -341,7 +372,7 @@ export async function inventoryIMSCCManifest(
       analysisType: resourceAnalysisType,
       links: [],
       videos: [],
-      files: [],
+      attachments: [],
       accessibilityResults: null,
     });
   }
@@ -383,8 +414,8 @@ export async function inventoryIMSCCModules(
     // const moduleStatus = metaModuleElement.querySelector('workflow_state')?.textContent === 'active' ? 'active' : 'unpublished';
     const moduleStatus =
       metaModuleElement.getElementsByTagName("workflow_state").length > 0 &&
-      metaModuleElement.getElementsByTagName("workflow_state")[0]
-        .textContent === "active"
+        metaModuleElement.getElementsByTagName("workflow_state")[0]
+          .textContent === "active"
         ? true
         : false;
     const moduleIdentifier = metaModuleElement.getAttribute("identifier")!;
@@ -406,15 +437,15 @@ export async function inventoryIMSCCModules(
       const itemStatus =
         metaModuleItemElement.getElementsByTagName("workflow_state").length >
           0 &&
-        metaModuleItemElement.getElementsByTagName("workflow_state")[0]
-          .textContent === "active"
+          metaModuleItemElement.getElementsByTagName("workflow_state")[0]
+            .textContent === "active"
           ? true
           : false;
       // const contentType = metaModuleItemElement.querySelector('content_type')?.textContent!;
       const itemContentType =
         metaModuleItemElement.getElementsByTagName("content_type").length > 0
           ? metaModuleItemElement.getElementsByTagName("content_type")[0]
-              .textContent!
+            .textContent!
           : "ERROR: no content_type";
       // const title = metaModuleItemElement.querySelector('title')?.textContent!;
       const itemTitle =
@@ -425,7 +456,7 @@ export async function inventoryIMSCCModules(
       const moduleItemIdentifierRef =
         metaModuleItemElement.getElementsByTagName("identifierref").length > 0
           ? metaModuleItemElement.getElementsByTagName("identifierref")[0]
-              .textContent || null
+            .textContent || null
           : null;
 
       const moduleItem: ModuleItem = {
@@ -504,7 +535,7 @@ export async function identifyObjectsInIMSCCResources(
     if (!fileContent) continue;
 
     const allLinks: LinkObject[] = [],
-      allFiles: FileObject[] = [],
+      allAttachments: FileObject[] = [],
       allVideos: VideoObject[] = [];
 
     let richContent: Document;
@@ -531,73 +562,13 @@ export async function identifyObjectsInIMSCCResources(
     }
 
     allLinks.push(...findLinks(richContent, resource));
-    allFiles.push(...findFileAttachments(richContent, resource));
+    allAttachments.push(...findFileAttachments(richContent, resource));
     allVideos.push(...findVideos(richContent, resource));
 
     resource.links = allLinks;
-    resource.files = allFiles;
+    resource.attachments = allAttachments;
     resource.videos = allVideos;
   }
-}
-
-/**
- * Analyze provided items: extract links/files/videos and run accessibility checks.
- * items - items to analyze (with href and analysisType)
- */
-export async function retire_analyzeIMSCCForObjects(
-  parser: PlatformDOMParser,
-  fileContents: { [key: string]: string },
-  items: Resource[],
-): Promise<{
-  videosResults: VideoObject[];
-  filesResults: FileObject[];
-  linksResults: LinkObject[];
-}> {
-  if (parser === null) throw Error("analyzeIMSCCContent: parser is null.");
-
-  const allLinks: LinkObject[] = [],
-    allFiles: FileObject[] = [],
-    allVideos: VideoObject[] = [];
-
-  for (const item of items) {
-    if (!item.analysisHref) continue;
-
-    const content = fileContents[item.analysisHref];
-    if (!content) continue;
-
-    let richContent: Document;
-    if (item.analysisType === "xml") {
-      const xmlDoc = parser.parseFromString(content, "application/xml");
-      // const description = xmlDoc.querySelector("description");
-      const description =
-        xmlDoc.getElementsByTagName("description").length > 0
-          ? xmlDoc.getElementsByTagName("description")[0]
-          : null;
-      const htmlContent = description ? description.textContent : "";
-      richContent = parser.parseFromString(htmlContent, "text/html");
-    } else if (item.analysisType === "discussion_xml") {
-      const xmlDoc = parser.parseFromString(content, "application/xml");
-      // const text = xmlDoc.querySelector("text");
-      const text =
-        xmlDoc.getElementsByTagName("text").length > 0
-          ? xmlDoc.getElementsByTagName("text")[0]
-          : null;
-      const htmlContent = text ? text.textContent : "";
-      richContent = parser.parseFromString(htmlContent, "text/html");
-    } else {
-      richContent = parser.parseFromString(content, "text/html");
-    }
-
-    allLinks.push(...findLinks(richContent, item));
-    allFiles.push(...findFileAttachments(richContent, item));
-    allVideos.push(...findVideos(richContent, item));
-  }
-
-  return {
-    videosResults: allVideos,
-    filesResults: allFiles,
-    linksResults: allLinks,
-  };
 }
 
 /**
@@ -722,7 +693,14 @@ function findLinks(doc: Document, item: Resource): LinkObject[] {
   const aElements = Array.from(doc.getElementsByTagName("a")).filter((a) =>
     a.hasAttribute("href"),
   );
-  aElements.forEach((a) => {
+  // This is specific to module links
+  const urlElements = Array.from(doc.getElementsByTagName("url")).filter((url) =>
+    url.hasAttribute('href'),
+  );
+
+  const aAndUrlElements = [...aElements, ...urlElements];
+
+  aAndUrlElements.forEach((a) => {
     const href = (a as HTMLAnchorElement).getAttribute("href");
     if (
       href &&
@@ -761,9 +739,9 @@ function findLinks(doc: Document, item: Resource): LinkObject[] {
  */
 // TODO: Refactor
 function findFileAttachments(doc: Document, item: Resource): FileObject[] {
-  const files: FileObject[] = [];
+  const attachments: FileObject[] = [];
 
-  if (!doc) return files;
+  if (!doc) return attachments;
   const aElements = Array.from(doc.getElementsByTagName("a")).filter(
     (a) =>
       a.classList.contains("instructure_file_link") ||
@@ -771,7 +749,7 @@ function findFileAttachments(doc: Document, item: Resource): FileObject[] {
   );
   // doc.querySelectorAll('a.instructure_file_link, a.instructure_scribd_file').forEach(a => {
   aElements.forEach((a) => {
-    files.push({
+    attachments.push({
       parentAnchorText: a.textContent.trim(),
       parentResourceIdentifier: item.identifier,
       /*
@@ -784,7 +762,7 @@ function findFileAttachments(doc: Document, item: Resource): FileObject[] {
     });
   });
 
-  return files;
+  return attachments;
 }
 
 /**
