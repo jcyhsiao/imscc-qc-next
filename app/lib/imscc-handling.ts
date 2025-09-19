@@ -785,13 +785,13 @@ function findFileAttachments(doc: Document, item: Resource): FileObject[] {
  */
 function findVideos(doc: Document, item: Resource): VideoObject[] {
   const videos: VideoObject[] = [];
+
   if (!doc) return videos;
 
   // TODO: Future opportunity to refactor
 
   // Check videos
   const videoElements = Array.from(doc.getElementsByTagName("video"));
-
   // doc.querySelectorAll('video').forEach(video => {
   videoElements.forEach((video) => {
     // const classes = (video.className || '').toLowerCase();
@@ -834,24 +834,27 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
 
   // Check iFrames
   const iFrameElements = Array.from(doc.getElementsByTagName("iframe"));
+  // console.log(iFrameElements);
   // doc.querySelectorAll('iframe').forEach(iframe => {
   iFrameElements.forEach((iframe) => {
     const src = (iframe.src || "");
+        const srcToLower = src.toLowerCase();
+
     const title = iframe.title || "(REMEDIATE: Title Not Found)";
     let platform = "unknown";
     const type = "embed";
-    if (src.includes("www.youtube.com/embed/")) platform = "youtube";
-    else if (src.includes("player.vimeo.com")) platform = "vimeo";
+    if (srcToLower.includes("www.youtube.com/embed/")) platform = "youtube";
+    else if (srcToLower.includes("player.vimeo.com")) platform = "vimeo";
     else if (
-      src.includes("https://mediasite.osu.edu/mediasite/lti/home/coverplay") ||
-      src.includes("mediasite.osu.edu/mediasite/play")
+      srcToLower.includes("https://mediasite.osu.edu/mediasite/lti/home/coverplay") ||
+      srcToLower.includes("mediasite.osu.edu/mediasite/play")
     )
       platform = "mediasite";
-    else if (src.includes("echo360.com/media")) platform = "echo360";
-    else if (src.includes("osucon.hosted.panopto.com")) platform = "panopto";
+    else if (srcToLower.includes("echo360.com/media")) platform = "echo360";
+    else if (srcToLower.includes("osucon.hosted.panopto.com")) platform = "panopto";
     else if (
-      src.includes("instructuremedia.com") ||
-      src.includes("media_attachments_iframe")
+      srcToLower.includes("instructuremedia.com") ||
+      srcToLower.includes("media_attachments_iframe")
     )
       platform = "instructure";
 
@@ -889,21 +892,23 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
   // doc.querySelectorAll('a').forEach(a => {
   aElements.forEach((a) => {
     const src = (a.href || "");
+            const srcToLower = src.toLowerCase();
+
     const title = a.text || "(Title Not Found)";
     let platform = "unknown";
     const type = "link";
-    if (src.includes("www.youtube.com/watch") || src.includes("youtu.be"))
+    if (srcToLower.includes("www.youtube.com/watch") || srcToLower.includes("youtu.be"))
       platform = "youtube";
-    else if (src.includes("vimeo.com")) platform = "vimeo";
-    else if (src.includes("mediasite.osu.edu/mediasite/play"))
+    else if (srcToLower.includes("vimeo.com")) platform = "vimeo";
+    else if (srcToLower.includes("mediasite.osu.edu/mediasite/play"))
       platform = "mediasite";
-    else if (src.includes("external_tools"))
+    else if (srcToLower.includes("external_tools"))
       platform = "lti";
-    else if (src.includes("echo360.org/media")) platform = "echo360";
-    else if (src.includes("osucon.hosted.panopto.com")) platform = "panopto";
+    else if (srcToLower.includes("echo360.org/media")) platform = "echo360";
+    else if (srcToLower.includes("osucon.hosted.panopto.com")) platform = "panopto";
     else if (
-      src.includes("instructuremedia.com") ||
-      src.includes("media_attachments_iframe")
+      srcToLower.includes("instructuremedia.com") ||
+      srcToLower.includes("media_attachments_iframe")
     )
       platform = "instructure";
 
