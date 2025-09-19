@@ -4,7 +4,6 @@ import Alert from '@spectrum-icons/workflow/Alert';
 
 import { extractIMSCC, inventoryIMSCCModules, inventoryIMSCCManifest, reconcileIMSCCModulesAndResources, identifyObjectsInIMSCCResources, checkIMSCCResourcesForAccessibility } from '@/app/lib/imscc-handling';
 import { Resource, Module } from '@/app/lib/definitions';
-import { EnhancedAxeResults } from '@/app/lib/definitions';
 
 import CourseStructureTab from '@/app/(results)/course-structure';
 import CourseResourcesTab from '@/app/(results)/course-resources';

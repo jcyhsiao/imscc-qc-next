@@ -46,10 +46,31 @@ export interface VideoObject {
   parentResourceIdentifier: string;
 }
 
+export const EXTENSION_COMMON_NAMES: { [key: string]: string } = {
+  '.ppt': 'PowerPoint (ppt)',
+  '.pptx': 'PowerPoint (pptx)',
+  '.doc': 'Word (doc)',
+  '.docx': 'Word (docx)',
+  '.xls': 'Excel (xls)',
+  '.xlsx': 'Excel (xlsx)',
+  '.csv': 'CSV (csv)',
+  '.jpg': 'Image (jpg)',
+  '.jpeg': 'Image (jpeg)',
+  '.png': 'Image (png)',
+  '.gif': 'Image (gif)',
+  '.mp4': 'Video (mp4)',
+  '.mp3': 'Audio (mp3)',
+  '.pdf': 'PDF',
+  '.txt': 'Text File',
+  '.zip': 'ZIP Archive',
+  '.rar': 'RAR Archive',
+}
+
 export interface FileObject {
   href: string;
   parentAnchorText: string;
   parentResourceIdentifier: string;
+  extension?: string;
   // parentResourceType: string;
   // parentResourceModuleTitle: string;
   // parentResourceTitle: string;

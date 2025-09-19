@@ -747,18 +747,32 @@ function findFileAttachments(doc: Document, item: Resource): FileObject[] {
       a.classList.contains("instructure_file_link") ||
       a.classList.contains("instructure_scribd_file"),
   );
+
+  // /\.[a-zA-Z0-9]+(?=[\?#]|$)/
+
   // doc.querySelectorAll('a.instructure_file_link, a.instructure_scribd_file').forEach(a => {
   aElements.forEach((a) => {
+    let anchorText = a.textContent.trim();
+    if (anchorText === '') anchorText = '(REMEDIATE: Phantom Link)';
+    const id = item.identifier;
+    const href = (a as HTMLAnchorElement).href;
+
+    const regex = /\.[a-zA-Z0-9]+(?=[\?#]|$)/;
+    const extMatch = href.match(regex);
+
+    const ext = extMatch ? extMatch[0] : undefined;
+
     attachments.push({
-      parentAnchorText: a.textContent.trim(),
-      parentResourceIdentifier: item.identifier,
+      parentAnchorText: anchorText,
+      parentResourceIdentifier: id,
       /*
       parentResourceType: item.clarifiedType || item.contentType,
       parentResourceModuleTitle:
         item.moduleTitle === undefined ? "(None)" : item.moduleTitle,
       parentResourceTitle: item.title,
        */
-      href: (a as HTMLAnchorElement).href,
+      href: href,
+      extension: ext,
     });
   });
 

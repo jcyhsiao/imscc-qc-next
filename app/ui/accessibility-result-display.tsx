@@ -5,11 +5,9 @@ import {
 } from "@/app/lib/definitions";
 import {
   Accordion, Disclosure, DisclosureTitle, DisclosurePanel,
-  Badge,
   ContextualHelp,
   Heading,
   Content,
-  Grid,
   Well,
   Flex,
   Switch,
@@ -18,7 +16,7 @@ import {
   View,
 } from "@adobe/react-spectrum";
 import React, { useState, useMemo } from "react";
-import { capitalize, QC_BADGES } from "@/app/ui/helpers";
+import { QC_BADGES } from "@/app/ui/helpers";
 import CheckboxGroupBuilder from "@/app/ui/checkbox-group-builder";
 import ResourceAccordionTitle from "@/app/ui/resource-accordion-title";
 // import ResourceObjectsAccordionsBuilder from "./resource-objects-accordions-builder";
@@ -28,7 +26,7 @@ export function AccessibilityResultsDisplay({
 }: {
   resources: Resource[];
 }) {
-  const { sortedResources, allResourcesWithResultsIDAndType, allResourcesWithResultsResourceTypes, allResourcesWithResultsResultTypes, allResourceCountsByResourceType, allResultsCountsByResultType, allResultsCountsByResourceType, allResourceCountsByResultType } = useMemo(() => {
+  const { sortedResources, allResourcesWithResultsIDAndType, allResourcesWithResultsResourceTypes, allResourcesWithResultsResultTypes, allResourceCountsByResourceType, allResultsCountsByResultType, allResourceCountsByResultType } = useMemo(() => {
     // NOTE: we are already excluding inapplicable in imscc-handling
     const omittedResourceTypes = ['modulelink'];
 
@@ -80,7 +78,7 @@ export function AccessibilityResultsDisplay({
       allResourcesWithResultsResourceTypes: resourcesWithResultsResourceTypesSet,
       allResourcesWithResultsIDAndType: resourcesWithResultsIDAndType,
       allResultsCountsByResultType: resultsCountsByResultType,
-      allResultsCountsByResourceType: resultsCountsByResourceType,
+      // allResultsCountsByResourceType: resultsCountsByResourceType,
       allResourceCountsByResultType: resourceCountsByResultType,
       allResourceCountsByResourceType: resourceCountsByResourceType,
     }

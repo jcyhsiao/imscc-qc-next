@@ -6,15 +6,12 @@ import {
   DisclosurePanel,
   Flex,
   Link,
-  Badge,
-  Grid,
   Text,
   View,
   Switch,
 } from "@adobe/react-spectrum";
 // import { Accordion, Disclosure, DisclosureTitle, DisclosurePanel } from '@adobe/react-spectrum';
-import { capitalize, QC_BADGES } from "@/app/ui/helpers";
-import { getResourceByIdentifier } from "@/app/lib/imscc-handling";
+import { QC_BADGES } from "@/app/ui/helpers";
 import { useState, useMemo } from "react";
 import CheckboxGroupBuilder from "@/app/ui/checkbox-group-builder";
 import ResourceAccordionTitle from "@/app/ui/resource-accordion-title";
@@ -33,21 +30,25 @@ const isOSULibrariesLink = (link: LinkObject): boolean => {
 
 export function LinksDisplay({ resources }: LinksDisplayProps) {
 
-  const { allResourcesWithLinksSorted, allFoundLinkTypes, allFoundLinksCountsByType, allFoundLinksResourceTypes, allFoundLinksCountsByResourceType } = useMemo(() => {
+  const { allResourcesWithLinksSorted, allResourcesWithLinksIDAndType, allFoundLinkTypes, allFoundLinksCountsByType, allFoundLinksResourceTypes, allFoundLinksCountsByResourceType } = useMemo(() => {
     // const resourcesWithLinksIDAndType: Record<string, string> = {};
     const foundLinks: LinkObject[] = [];
     const foundLinksResourceTypes = new Set<string>();
     const foundLinksCountsByResourceType: Record<string, number> = {};
 
-    resources.forEach(resource => {
-      if (resource.links.length === 0) return;
+    const resourcesWithLinksSorted = resources.sort((a, b) => a.title.localeCompare(b.title))
+      .filter(resource => resource.links.length >= 0);
 
+    const resourcesWithLinksIDAndType: Record<string, string> = {};
+
+    resourcesWithLinksSorted.forEach(resource => {
       const linkResourceType = resource.clarifiedType || 'tbd';
 
       foundLinks.push(...resource.links);
       // resourcesWithLinksIDAndType[resource.identifier] = resourcesWithLinksIDAndType[linkResourceType];
       foundLinksResourceTypes.add(linkResourceType);
       foundLinksCountsByResourceType[linkResourceType] = (foundLinksCountsByResourceType[linkResourceType] || 0) + 1;
+      resourcesWithLinksIDAndType[resource.identifier] = linkResourceType;
     });
 
     const foundLinksTypes = new Set(foundLinks.map(link => link.type.toString()));
@@ -56,15 +57,13 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
       foundLinksCountsByType[type] = foundLinks.filter(link => link.type === type).length
     );
 
-    const resourcesWithLinksSorted = resources.sort((a, b) => a.title.localeCompare(b.title))
-      .filter(resource => resource.links.length >= 0);
-
     return {
       allFoundLinkTypes: foundLinksTypes,
       allFoundLinksCountsByType: foundLinksCountsByType,
       allFoundLinksResourceTypes: foundLinksResourceTypes,
       allFoundLinksCountsByResourceType: foundLinksCountsByResourceType,
-      allResourcesWithLinksSorted: resourcesWithLinksSorted
+      allResourcesWithLinksSorted: resourcesWithLinksSorted,
+      allResourcesWithLinksIDAndType: resourcesWithLinksIDAndType,
     }
   }, [resources]);
 
@@ -129,7 +128,6 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
       </Flex>
       <Accordion>
         {allResourcesWithLinksSorted.map((resource) => {
-          if (resource.clarifiedType === 'modulelink') console.log(resource);
 
           let filteredLinksCount = 0;
           filteredLinksCount += resource.links.filter((link) =>
@@ -166,10 +164,8 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
                         showOSULibrariesLinksOnly &&
                         !isOSULibrariesLink(link)) ||
                       !selectedResourceTypes.includes(
-                        getResourceByIdentifier(
-                          resources,
-                          link.parentResourceIdentifier,
-                        )?.clarifiedType || "tbd",
+                        allResourcesWithLinksIDAndType[
+                          link.parentResourceIdentifier]
                       );
 
                     return (
