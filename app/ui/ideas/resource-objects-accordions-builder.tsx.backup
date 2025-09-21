@@ -1,4 +1,4 @@
-// TODO: This was a good idea, but introduced a lot of jank
+// This was a good idea, but introduced a lot of jank
 
 import {
   Accordion,

@@ -41,7 +41,7 @@ export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
         {Object.entries(allResourcesByType).map(([type, items]) => (
           <Disclosure id={type} key={type}>
             <DisclosureTitle>
-              {capitalize(type)} ({items.length})
+              {type === 'modulelink' ? 'Link in Module' : capitalize(type)} ({items.length})
             </DisclosureTitle>
             <DisclosurePanel>
               <ul style={{ listStyleType: "none", paddingLeft: 0 }}>

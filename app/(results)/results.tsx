@@ -33,14 +33,18 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
     useEffect(() => {
         const performAnalysis = async () => {
             // Only proceed if analysis is requested and a file is selected, and not already complete
-            if (!isAnalyzing || !selectedFile || isAnalysisComplete) {
+            console.log('isAnalyzing', isAnalyzing);
+            console.log('selectedFile', selectedFile);
+            console.log('isAnalysisComplete', isAnalysisComplete);
+
+            if (!isAnalyzing || !selectedFile) {
                 return;
             }
 
-            setIsAnalysisComplete(false); // Reset in case it was true from a previous run
-            setIsAnalysisErrored(false);
-
             try {
+                // Reset
+                setIsAnalysisComplete(false); // Reset in case it was true from a previous run
+                setIsAnalysisErrored(false);
                 const domParser = new DOMParser(); // Create parser instance here
                 setParser(domParser); // Update state with the new parser
 
@@ -67,7 +71,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
         };
 
         performAnalysis();
-    }, [isAnalyzing, setIsAnalyzing,selectedFile, isAnalysisComplete]);
+    }, [isAnalyzing, setIsAnalyzing, selectedFile, isAnalysisComplete]);
 
     return (
         <View width='90vw'>
@@ -108,18 +112,20 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                                     <CourseResourcesTab resources={allResources} />
                                 </Item>
                                 <Item key="ally">
-                                   <AccessibilityCheckTab resources={allResources} />
+                                    <AccessibilityCheckTab resources={allResources} />
                                 </Item>
                                 <Item key="links">
                                     <CourseLinksTab resources={allResources} />
                                 </Item>
                                 <Item key="attachments">
-                                    <CourseAttachmentsTab resources={allResources } />
+                                    <CourseAttachmentsTab resources={allResources} />
                                 </Item>
                                 <Item key="videos">
                                     <CourseVideosTab resources={allResources} />
                                 </Item>
                                 <Item key="exports">
+                                    {/* TODO: Export functionality
+                                    */}
                                     Alea jacta est.
                                 </Item>
                             </TabPanels>

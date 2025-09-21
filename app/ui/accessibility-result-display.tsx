@@ -47,9 +47,6 @@ export function AccessibilityResultsDisplay({
 
     const results = resources
       .flatMap(result => result.accessibilityResults?.results || [])
-    // TODO: Filter out 'inapplicable' later
-    // .filter(result => result.type !== 'inapplicable');
-
     //   const resultsTypes = results.flatMap(result => result.type as AccessibilityResultType);
     const resourcesWithResultsResultsTypesSet = new Set<AccessibilityResultType>();
     const resultsCountsByResultType: Record<string, number> = {};

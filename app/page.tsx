@@ -8,7 +8,6 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // TODO: Reset when picking another file
   return (
     // <Flex direction="column" gap="size-200" alignItems="center" justifyContent="center" height="100vh">
       <View margin='auto' width='90vw'>
@@ -22,7 +21,6 @@ export default function Home() {
             onSelect={(e) => {
               const files = Array.from(e!);
               setFile(files[0]);
-              setIsAnalyzing(false);
             }}
             acceptedFileTypes={['.imscc', '.zip']}
           >

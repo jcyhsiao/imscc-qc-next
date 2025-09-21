@@ -19,29 +19,19 @@ export async function extractIMSCC(
   file: File | ArrayBuffer,
 ): Promise<{ [key: string]: string }> {
   try {
-    // updateProgress && updateProgress(10, 'Unzipping archive...');
     const zip = await JSZip.loadAsync(file);
-
-    // updateProgress && updateProgress(30, 'Reading all course files...');
 
     const fileContents: { [key: string]: string } = {};
     const zipFiles = Object.values(zip.files).filter(
       (f) => !f.dir && !f.name.startsWith("web_resources/"),
     );
-    // const totalFiles = zipFiles.length;
-    // let fileCount = 0;
 
     for (const zipEntry of zipFiles) {
       const content = await zipEntry.async("string");
       fileContents[zipEntry.name] = content;
-      // fileCount++;
-      // const progress = 30 + (60 * (fileCount / totalFiles));
-      // if (progress % 10 === 0 && updateProgress) updateProgress(progress, `Reading file ${fileCount} of ${totalFiles}`);
     }
     return fileContents;
   } catch (error) {
-    // loadingStatus.textContent = `Error: ${(error as Error).message}`;
-    // progressBar.style.backgroundColor = '#ef4444';
     throw error;
   }
 }
@@ -86,7 +76,8 @@ export async function inventoryIMSCCManifest(
     const resourceIdentifier =
       manifestResourceElement.getAttribute("identifier")!;
     const resourceHref = manifestResourceElement.getAttribute("href");
-    const resourceFileHref = manifestResourceElement.getElementsByTagName('file')?.[0].getAttribute('href');
+    // This may be modified later
+    let resourceFileHref = manifestResourceElement.getElementsByTagName('file')?.[0].getAttribute('href');
     const resourceType = manifestResourceElement.getAttribute("type")!;
 
     // Skip supporting element
@@ -96,7 +87,7 @@ export async function inventoryIMSCCManifest(
     )
       continue;
 
-    // Skip several types of resources:LTIs, links in modules, and qustion banks (for now)
+    // Skip several types of resources
     if (
       // LTIs
       resourceType === "imsbasiclti_xmlv1p3" ||
@@ -111,11 +102,15 @@ export async function inventoryIMSCCManifest(
     )
       continue;
 
+    // Set up new Resource object
     let resourceStatus = false;
     let resourceTitle = "untitled";
-
     let resourceAnalysisHref: string | null = null;
     let resourceAnalysisType = "html";
+    let resourceClarifiedType: string | null = null;
+    let resourceIdentifierRef: string | null = null;
+
+    // Determine resource types
     const isAssignment =
       resourceType.includes(
         "associatedcontent/imscc_xmlv1p1/learning-application-resource",
@@ -123,111 +118,66 @@ export async function inventoryIMSCCManifest(
       resourceHref &&
       resourceHref.endsWith("html") &&
       !resourceHref.startsWith("course_settings/");
+
     const isQuizOrSurvey = resourceType.includes(
       "imsqti_xmlv1p2/imscc_xmlv1p1/assessment",
     );
+
     const isDiscussion = resourceType.includes("imsdt_xmlv1p1");
+
     const isPage =
       resourceType === "webcontent" &&
       resourceHref &&
       resourceHref.startsWith("wiki_content/");
+
     const isSyllabus =
       resourceIdentifier.endsWith("_syllabus") &&
       resourceHref;
+
     const isLink =
       resourceType === 'imswl_xmlv1p1' &&
       resourceFileHref;
 
-    let resourceClarifiedType: string | null = null;
-    let resourceIdentifierRef: string | null = null;
+    // Refactored
+    // This might be customized
+    let analysisHref = resourceFileHref;
 
-    // TODO: A lot of refactoring opportunities here
+    // Set clarified type and set up parsing
+    // Update resourceFileHref as needed
+    let resourceContentParseType = '';
+    let discussionSettingsHref = '';
     if (isLink) {
       resourceClarifiedType = 'modulelink';
-      const linkContent = fileContents[resourceFileHref];
-      if (linkContent) {
-        const linkDoc = parser.parseFromString(
-          linkContent,
-          "application/xml",
-        );
-        resourceTitle = linkDoc.getElementsByTagName("title").length > 0
-          ? linkDoc.getElementsByTagName("title")[0].textContent ||
-          resourceTitle
-          : resourceTitle;
-      }
-      resourceAnalysisHref = resourceFileHref;
+      resourceContentParseType = 'application/xml';
     }
-    else if (isSyllabus) {
+
+    if (isSyllabus) {
       resourceClarifiedType = 'syllabus';
-      const pageContent = fileContents[resourceHref];
-      if (pageContent) {
-        const pageDoc = parser.parseFromString(pageContent, "text/html");
-        resourceTitle =
-          pageDoc.getElementsByTagName("title").length > 0
-            ? pageDoc.getElementsByTagName("title")[0].textContent ||
-            resourceTitle
-            : resourceTitle;
-        // This is not true; but we are keeping things simple for now
-        resourceStatus = true;
-      }
-      resourceAnalysisHref = resourceHref;
+      resourceContentParseType = 'text/html';
     }
-    else if (isPage) {
+
+    if (isPage) {
       resourceClarifiedType = "page";
-      const pageContent = fileContents[resourceHref];
-      if (pageContent) {
-        const pageDoc = parser.parseFromString(pageContent, "text/html");
-        // resourceTitle = pageDoc.querySelector('title')?.textContent || resourceTitle;
-        resourceTitle =
-          pageDoc.getElementsByTagName("title").length > 0
-            ? pageDoc.getElementsByTagName("title")[0].textContent ||
-            resourceTitle
-            : resourceTitle;
-        // resourceStatus = pageDoc.querySelector('meta[name="workflow_state"]')?.getAttribute('content') === 'active' ? 'active' : 'unpublished';
-        const metaElements = Array.from(pageDoc.getElementsByTagName("meta"));
-        const workflowStateMeta = metaElements.find(
-          (meta) => meta.getAttribute("name") === "workflow_state",
-        );
-        resourceStatus =
-          workflowStateMeta?.getAttribute("content") === "active"
-            ? true
-            : false;
-      }
-      resourceAnalysisHref = resourceHref;
-    } else if (isAssignment) {
-      resourceClarifiedType = "assignment";
-      const assignmentSettingsPath = Object.keys(fileContents).find(
+      resourceContentParseType = 'text/html';
+    }
+
+    if (isAssignment) {
+      resourceFileHref = Object.keys(fileContents).find(
         (fileName) =>
           fileName.startsWith(`${resourceIdentifier}/`) &&
           fileName.endsWith("assignment_settings.xml"),
-      );
-      if (assignmentSettingsPath) {
-        const settingsDoc = parser.parseFromString(
-          fileContents[assignmentSettingsPath],
-          "application/xml",
-        );
-        // resourceStatus = settingsDoc.querySelector('workflow_state')?.textContent === 'active' ? 'active' : 'unpublished';
-        resourceStatus =
-          settingsDoc.getElementsByTagName("workflow_state").length > 0 &&
-            settingsDoc.getElementsByTagName("workflow_state")[0].textContent ===
-            "active"
-            ? true
-            : false;
-        // resourceTitle = settingsDoc.querySelector('title')?.textContent || resourceTitle;
-        resourceTitle =
-          settingsDoc.getElementsByTagName("title").length > 0
-            ? settingsDoc.getElementsByTagName("title")[0].textContent ||
-            resourceTitle
-            : resourceTitle;
-      }
-      const assignmentHtmlPath = Object.keys(fileContents).find(
+      ) || null;
+
+      resourceClarifiedType = "assignment";
+      resourceContentParseType = 'application/xml';
+      analysisHref = Object.keys(fileContents).find(
         (fileName) =>
           fileName.startsWith(`${resourceIdentifier}/`) &&
           fileName.endsWith(".html"),
-      );
-      if (assignmentHtmlPath) resourceAnalysisHref = assignmentHtmlPath;
-    } else if (isQuizOrSurvey) {
-      // const resourceIdentifierRef = manifestResourceElement.querySelector('dependency')!.getAttribute("identifierref")!;
+      ) || '';
+    }
+
+    if (isDiscussion || isQuizOrSurvey) {
       resourceIdentifierRef =
         manifestResourceElement.getElementsByTagName("dependency").length > 0
           ? manifestResourceElement
@@ -251,112 +201,120 @@ export async function inventoryIMSCCManifest(
           matchingManifestResourceElementIdentifier,
         );
 
-        resourceAnalysisHref =
-          matchingManifestResourceElement.getAttribute("href");
-        resourceAnalysisType = "xml";
-        if (resourceAnalysisHref === null)
-          throw new Error("resourceAnalysisHref should NOT be null.");
+        if (isQuizOrSurvey) {
+          resourceContentParseType = 'application/xml';
+          // Setting clarifiedType after getting resourceDoc
 
-        const itemMetaDoc = parser.parseFromString(
-          fileContents[resourceAnalysisHref],
-          "application/xml",
-        );
-        if (itemMetaDoc) {
-          // resourceTitle = itemMetaDoc.querySelector('title')?.textContent || resourceTitle;
-          resourceTitle =
-            itemMetaDoc.getElementsByTagName("title").length > 0
-              ? itemMetaDoc.getElementsByTagName("title")[0].textContent ||
-              resourceTitle
-              : resourceTitle;
-          // resourceStatus = itemMetaDoc.querySelector('available')?.textContent === 'true' ? 'active' : 'unpublished';
-          resourceStatus =
-            itemMetaDoc.getElementsByTagName("available").length > 0 &&
-              itemMetaDoc.getElementsByTagName("available")[0].textContent ===
-              "true"
-              ? true
-              : false;
+          analysisHref =
+            matchingManifestResourceElement.getAttribute("href");
+          resourceAnalysisType = "xml";
+          if (analysisHref === null)
+            throw new Error("resourceAnalysisHref should NOT be null.");
+          resourceFileHref = analysisHref;
         }
-        // const quizType = itemMetaDoc.querySelector('quiz_type')?.textContent;
-        const quizType =
-          itemMetaDoc.getElementsByTagName("quiz_type").length > 0
-            ? itemMetaDoc.getElementsByTagName("quiz_type")[0].textContent
-            : null;
-        if (quizType === "survey") {
-          resourceClarifiedType = "survey";
-        } else {
-          resourceClarifiedType = "quiz";
-        }
-      }
-    } else if (isDiscussion) {
-      resourceClarifiedType = "discussion";
-      const discussionXmlPath = `${resourceIdentifier}.xml`;
-      if (fileContents[discussionXmlPath]) {
-        resourceAnalysisHref = discussionXmlPath;
-        resourceAnalysisType = "discussion_xml";
-        const discussionDoc = parser.parseFromString(
-          fileContents[discussionXmlPath],
-          "application/xml",
-        );
-        // resourceTitle = discussionDoc.querySelector('title')?.textContent || resourceTitle;
-        resourceTitle =
-          discussionDoc.getElementsByTagName("title").length > 0
-            ? discussionDoc.getElementsByTagName("title")[0].textContent ||
-            resourceTitle
-            : resourceTitle;
 
-        // const resourceIdentifierRef = manifestResourceElement.querySelector('dependency')!.getAttribute("identifierref")!;
-        resourceIdentifierRef =
-          manifestResourceElement.getElementsByTagName("dependency").length > 0
-            ? manifestResourceElement
-              .getElementsByTagName("dependency")[0]
-              .getAttribute("identifierref")!
-            : null;
-        const matchingManifestResourceElement =
-          findManifestResourceElementByIentifier(resourceIdentifierRef);
+        if (isDiscussion) {
+          resourceContentParseType = 'application/xml';
+          // Setting clarifiedType after getting resourceDoc
 
-        if (
-          matchingManifestResourceElement &&
-          fileContents[matchingManifestResourceElement.getAttribute("href")!]
-        ) {
-          const matchingManifestResourceElementIdentifier =
-            matchingManifestResourceElement.getAttribute("identifier");
-          if (matchingManifestResourceElementIdentifier === null)
-            throw new Error(
-              "matchingManifestResourceElementIdentifier should NOT be null.",
-            );
-          manifestSupportingResourceElements.push(
-            matchingManifestResourceElementIdentifier,
-          );
+          const discussionXmlPath = `${resourceIdentifier}.xml`;
+          analysisHref = discussionXmlPath;
+          resourceFileHref = discussionXmlPath;
+          resourceAnalysisType = 'discussion_xml';
 
           const settingsHref =
             matchingManifestResourceElement.getAttribute("href");
           if (settingsHref === null)
             throw new Error("settingsHref should NOT be null.");
+          discussionSettingsHref = settingsHref;
+        }
+      }
+    }
 
-          const itemSettingsDoc = parser.parseFromString(
-            fileContents[settingsHref],
+    if (resourceFileHref) {
+      const resourceContent = fileContents[resourceFileHref]
+
+      if (resourceContent) {
+        const resourceDoc = parser.parseFromString(
+          resourceContent,
+          resourceContentParseType as DOMParserSupportedType,
+        );
+
+        resourceTitle = resourceDoc.getElementsByTagName("title").length > 0
+          ? resourceDoc.getElementsByTagName("title")[0].textContent ||
+          resourceTitle
+          : resourceTitle;
+
+        // Set status
+        if (isSyllabus) {
+          // This is not necessarily true; but not worth trying to parse through other things
+          resourceStatus = true;
+        }
+        if (isPage) {
+          const metaElements = Array.from(resourceDoc.getElementsByTagName("meta"));
+          const workflowStateMeta = metaElements.find(
+            (meta) => meta.getAttribute("name") === "workflow_state",
+          );
+          resourceStatus =
+            workflowStateMeta?.getAttribute("content") === "active"
+              ? true
+              : false;
+        }
+        if (isAssignment) {
+          resourceStatus =
+            resourceDoc.getElementsByTagName("workflow_state").length > 0 &&
+              resourceDoc.getElementsByTagName("workflow_state")[0].textContent ===
+              "active"
+              ? true
+              : false;
+        }
+        if (isDiscussion) {
+          const discussionSettingsDoc = parser.parseFromString(
+            fileContents[discussionSettingsHref],
             "application/xml",
           );
-          if (itemSettingsDoc) {
-            // resourceStatus = itemSettingsDoc.querySelector('workflow_state')?.textContent === 'active' ? 'active' : 'unpublished';
+          if (discussionSettingsDoc) {
             resourceStatus =
-              itemSettingsDoc.getElementsByTagName("workflow_state").length >
+              discussionSettingsDoc.getElementsByTagName("workflow_state").length >
                 0 &&
-                itemSettingsDoc.getElementsByTagName("workflow_state")[0]
+                discussionSettingsDoc.getElementsByTagName("workflow_state")[0]
                   .textContent === "active"
                 ? true
                 : false;
           }
           // const discussionType = itemSettingsDoc.querySelector('type')?.textContent;
           const discussionType =
-            itemSettingsDoc.getElementsByTagName("type").length > 0
-              ? itemSettingsDoc.getElementsByTagName("type")[0].textContent
+            discussionSettingsDoc.getElementsByTagName("type").length > 0
+              ? discussionSettingsDoc.getElementsByTagName("type")[0].textContent
               : null;
           if (discussionType === "announcement") {
             resourceClarifiedType = "announcement";
+          } else {
+            resourceClarifiedType = 'discussion'
+          }
+        }
+        if (isQuizOrSurvey) {
+          resourceStatus =
+            resourceDoc.getElementsByTagName("available").length > 0 &&
+              resourceDoc.getElementsByTagName("available")[0].textContent ===
+              "true"
+              ? true
+              : false;
+
+          // Set clarifiedType for quiz or survey
+          const quizType =
+            resourceDoc.getElementsByTagName("quiz_type").length > 0
+              ? resourceDoc.getElementsByTagName("quiz_type")[0].textContent
+              : null;
+          if (quizType === "survey") {
+            resourceClarifiedType = "survey";
+          } else {
+            resourceClarifiedType = "quiz";
           }
         }
       }
+      // Finall set the resoruceAnalysisHref
+      resourceAnalysisHref = analysisHref;
     }
 
     if (!resourceClarifiedType) continue;
@@ -513,10 +471,6 @@ export function reconcileIMSCCModulesAndResources(
   allResources = reconciledResources;
 }
 
-/*
-         // Building our list of in-module items. TODO: Utilize this
-            inModuleResourceIdentifiers.add(moduleItemIdentifier);
-            */
 
 /**
  * Analyze provided items: extract links/files/videos and run accessibility checks.
@@ -738,7 +692,6 @@ function findLinks(doc: Document, item: Resource): LinkObject[] {
 /**
  * Find file attachment links in a document.
  */
-// TODO: Refactor
 function findFileAttachments(doc: Document, item: Resource): FileObject[] {
   const attachments: FileObject[] = [];
 
@@ -788,133 +741,92 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
 
   if (!doc) return videos;
 
-  // TODO: Future opportunity to refactor
+  function videoPlatform(src: string): string {
+    const knownPlatforms = {
+      'youtube': ['www.youtube.com/embed/', 'www.youtube.com/watch', 'youtu.be'],
+      'vimeo': ['player.vimeo.com', 'vimeo.com'],
+      'mediasite': [
+        'https://mediasite.osu.edu/mediasite/lti/home/coverplay',
+        'mediasite.osu.edu/mediasite/play',
+      ],
+      'echo360': ['echo360.com/media'],
+      'panopto': ['osucon.hosted.panopto.com'],
+      'instructure': ['instructuremedia.com', 'media_attachments_iframe'],
+      'external_tools': ['external_tools'],
+    }
 
-  // Check videos
+    let platform = 'unknown';
+    Object.entries(knownPlatforms).forEach(knownPlatformObj => {
+      const [knownPlatform, urls] = knownPlatformObj
+      urls.forEach(url => {
+        if (src.includes(url)) platform = knownPlatform;
+        return;
+      });
+    });
+
+    return platform;
+  }
+
+  // Check for videos
   const videoElements = Array.from(doc.getElementsByTagName("video"));
-  // doc.querySelectorAll('video').forEach(video => {
-  videoElements.forEach((video) => {
-    // const classes = (video.className || '').toLowerCase();
-    const title = video.title || "(REMEDIATE: Title Not Found)";
-    const source = video.querySelector("source");
-    const src = source?.src || "";
-    const platform: string = "Instructure";
-    const type = "embed";
-    // if (classes.includes('instructure_inline_media_comment')) platform = 'Instructure';
-
-    if (platform != "Unknown") {
-      const traverseRootTag =
-        video.parentElement instanceof HTMLParagraphElement
-          ? video.parentElement
-          : video;
-
-      const adjacentText = (
-        (traverseRootTag.previousElementSibling?.innerHTML || "") +
-        " " +
-        (traverseRootTag.nextElementSibling?.innerHTML || "") +
-        (traverseRootTag.nextElementSibling?.nextElementSibling?.innerHTML ||
-          "")
-      ).toLowerCase();
-
-      const transcriptOrCaptionMentioned = /transcript|caption/i.test(
-        adjacentText,
-      );
-
-      videos.push({
-        title: title,
-        platform,
-        src: src,
-        type: type,
-        transcriptOrCaptionMentioned: transcriptOrCaptionMentioned,
-        // parentResourceTitle: item.title,
-        parentResourceIdentifier: item.identifier,
-      });
-    }
-  });
-
-  // Check iFrames
   const iFrameElements = Array.from(doc.getElementsByTagName("iframe"));
-  // console.log(iFrameElements);
-  // doc.querySelectorAll('iframe').forEach(iframe => {
-  iFrameElements.forEach((iframe) => {
-    const src = (iframe.src || "");
-        const srcToLower = src.toLowerCase();
-
-    const title = iframe.title || "(REMEDIATE: Title Not Found)";
-    let platform = "unknown";
-    const type = "embed";
-    if (srcToLower.includes("www.youtube.com/embed/")) platform = "youtube";
-    else if (srcToLower.includes("player.vimeo.com")) platform = "vimeo";
-    else if (
-      srcToLower.includes("https://mediasite.osu.edu/mediasite/lti/home/coverplay") ||
-      srcToLower.includes("mediasite.osu.edu/mediasite/play")
-    )
-      platform = "mediasite";
-    else if (srcToLower.includes("echo360.com/media")) platform = "echo360";
-    else if (srcToLower.includes("osucon.hosted.panopto.com")) platform = "panopto";
-    else if (
-      srcToLower.includes("instructuremedia.com") ||
-      srcToLower.includes("media_attachments_iframe")
-    )
-      platform = "instructure";
-
-    if (platform != "unknown") {
-      const traverseRootTag =
-        iframe.parentElement instanceof HTMLParagraphElement
-          ? iframe.parentElement
-          : iframe;
-
-      const adjacentText = (
-        (traverseRootTag.previousElementSibling?.innerHTML || "") +
-        " " +
-        (traverseRootTag.nextElementSibling?.innerHTML || "") +
-        (traverseRootTag.nextElementSibling?.nextElementSibling?.innerHTML ||
-          "")
-      ).toLowerCase();
-
-      const transcriptOrCaptionMentioned = /transcript|caption/i.test(
-        adjacentText,
-      );
-
-      videos.push({
-        title: title,
-        platform,
-        src: src,
-        type: type,
-        transcriptOrCaptionMentioned: transcriptOrCaptionMentioned,
-        // parentResourceTitle: item.title,
-        parentResourceIdentifier: item.identifier,
-      });
-    }
-  });
-
   const aElements = Array.from(doc.getElementsByTagName("a"));
-  // doc.querySelectorAll('a').forEach(a => {
-  aElements.forEach((a) => {
-    const src = (a.href || "");
-            const srcToLower = src.toLowerCase();
 
-    const title = a.text || "(Title Not Found)";
-    let platform = "unknown";
-    const type = "link";
-    if (srcToLower.includes("www.youtube.com/watch") || srcToLower.includes("youtu.be"))
-      platform = "youtube";
-    else if (srcToLower.includes("vimeo.com")) platform = "vimeo";
-    else if (srcToLower.includes("mediasite.osu.edu/mediasite/play"))
-      platform = "mediasite";
-    else if (srcToLower.includes("external_tools"))
-      platform = "lti";
-    else if (srcToLower.includes("echo360.org/media")) platform = "echo360";
-    else if (srcToLower.includes("osucon.hosted.panopto.com")) platform = "panopto";
-    else if (
-      srcToLower.includes("instructuremedia.com") ||
-      srcToLower.includes("media_attachments_iframe")
-    )
-      platform = "instructure";
+  const allNodesToParse: Array<{type: string, element: HTMLVideoElement | HTMLIFrameElement | HTMLAnchorElement}> = []
+  videoElements.forEach(element =>
+    allNodesToParse.push({type: 'video', element: element})
+  );
+  iFrameElements.forEach(element =>
+    allNodesToParse.push({type: 'iframe', element: element})
+  );
+  aElements.forEach(element =>
+    allNodesToParse.push({type: 'a', element: element})
+  );
 
+  allNodesToParse.forEach(node => {
+    const nodeType = node.type;
+    const nodeElement: HTMLVideoElement | HTMLIFrameElement | HTMLAnchorElement = node.element;
+
+    let tempTitle = '';
+    let title = '(REMEDIATE: Title Not Found)';
+    let src = '';
+    let srcToLower = '';
+    let platform = 'unknown';
+    let type = 'tbd';
+
+    switch (nodeType) {
+      case 'video':
+        tempTitle = nodeElement.title;
+        if (tempTitle !== '') title = tempTitle;
+        const source = nodeElement.querySelector("source");
+        src = source?.src || "";
+        platform = "Instructure";
+        type = 'embed';
+        break;
+      case 'iframe':
+        tempTitle = nodeElement.title;
+        if (tempTitle !== '') title = tempTitle;
+        src = (nodeElement as HTMLIFrameElement).src;
+        srcToLower = src.toLowerCase();
+        type = 'embed';
+        platform = videoPlatform(srcToLower);
+        break;
+      case 'a':
+        tempTitle = (nodeElement as HTMLAnchorElement).text;
+        if (tempTitle !== '') title = tempTitle;
+        src = (nodeElement as HTMLAnchorElement).href;
+        srcToLower = src.toLowerCase();
+        type = 'link';
+        platform = videoPlatform(srcToLower);
+        break;
+    }
+
+    // Get adjacent text
     if (platform != "unknown") {
       const traverseRootTag =
-        a.parentElement instanceof HTMLParagraphElement ? a.parentElement : a;
+        nodeElement.parentElement instanceof HTMLParagraphElement
+          ? nodeElement.parentElement
+          : nodeElement;
 
       const adjacentText = (
         (traverseRootTag.previousElementSibling?.innerHTML || "") +
@@ -939,6 +851,7 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
       });
     }
   });
+
   return videos;
 }
 
