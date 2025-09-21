@@ -13,7 +13,12 @@ import axe from "axe-core";
 import JSZip from "jszip";
 
 /**
- * Extracts files from the provided ZIP archive and returns a map of name->content.
+ * Extracts files from the provided IMSCC ZIP archive.
+ * It filters out directory entries and files starting with "web_resources/".
+ *
+ * @param file The File object or ArrayBuffer representing the ZIP archive.
+ * @returns A Promise that resolves to an object mapping file names (paths) to their string content.
+ * @throws If there's an error loading or processing the ZIP file.
  */
 export async function extractIMSCC(
   file: File | ArrayBuffer,
@@ -36,6 +41,16 @@ export async function extractIMSCC(
   }
 }
 
+/**
+ * Inventories and processes the `imsmanifest.xml` file from an IMSCC package
+ * to extract information about all resources. It identifies resource types,
+ * titles, publication status, and relevant file paths for further analysis.
+ *
+ * @param parser A DOMParser instance for parsing XML/HTML content.
+ * @param fileContents An object mapping file paths to their string content from the IMSCC package.
+ * @returns A Promise that resolves to an array of `Resource` objects, each representing a resource found in the manifest.
+ * @throws If `imsmanifest.xml` is not found or if critical data is missing.
+ */
 export async function inventoryIMSCCManifest(
   parser: PlatformDOMParser,
   fileContents: { [key: string]: string },
@@ -56,7 +71,11 @@ export async function inventoryIMSCCManifest(
   );
   const manifestSupportingResourceElements: string[] = [];
 
-  // Helper to find a manifest <resource> element by an identifier (e.g., its corresponding <item>'s identifierref)
+  /**
+   * Helper to find a manifest <resource> element by an identifier (e.g., its corresponding <item>'s identifierref).
+   * @param id The identifier to search for.
+   * @returns The matching Element or null if not found.
+   */
   const findManifestResourceElementByIentifier = (
     id: string | null,
   ): Element | null => {
@@ -76,18 +95,17 @@ export async function inventoryIMSCCManifest(
     const resourceIdentifier =
       manifestResourceElement.getAttribute("identifier")!;
     const resourceHref = manifestResourceElement.getAttribute("href");
-    // This may be modified later
     let resourceFileHref = manifestResourceElement.getElementsByTagName('file')?.[0].getAttribute('href');
     const resourceType = manifestResourceElement.getAttribute("type")!;
 
-    // Skip supporting element
+    // Skip supporting element (e.g., files referenced by other resources)
     if (
       resourceIdentifier &&
       manifestSupportingResourceElements.includes(resourceIdentifier)
     )
       continue;
 
-    // Skip several types of resources
+    // Skip several types of resources based on type or href patterns
     if (
       // LTIs
       resourceType === "imsbasiclti_xmlv1p3" ||
@@ -95,7 +113,7 @@ export async function inventoryIMSCCManifest(
       resourceHref?.includes("non_cc_assessments") ||
       // Course settings entry
       resourceHref?.includes("canvas_export.txt") ||
-      // File
+      // File (web_resources are handled separately or skipped)
       (resourceType === "webcontent" &&
         resourceHref &&
         resourceHref.startsWith("web_resources/"))
@@ -106,11 +124,11 @@ export async function inventoryIMSCCManifest(
     let resourceStatus = false;
     let resourceTitle = "untitled";
     let resourceAnalysisHref: string | null = null;
-    let resourceAnalysisType = "html";
+    let resourceAnalysisType = "html"; // Default analysis type
     let resourceClarifiedType: string | null = null;
     let resourceIdentifierRef: string | null = null;
 
-    // Determine resource types
+    // Determine specific resource categories based on type and href
     const isAssignment =
       resourceType.includes(
         "associatedcontent/imscc_xmlv1p1/learning-application-resource",
@@ -138,13 +156,11 @@ export async function inventoryIMSCCManifest(
       resourceType === 'imswl_xmlv1p1' &&
       resourceFileHref;
 
-    // Refactored
-    // This might be customized
-    let analysisHref = resourceFileHref;
 
+    let analysisHref = resourceFileHref;
     // Set clarified type and set up parsing
     // Update resourceFileHref as needed
-    let resourceContentParseType = '';
+    let resourceContentParseType: DOMParserSupportedType | '' = ''; // Explicitly type as DOMParserSupportedType or empty string
     let discussionSettingsHref = '';
     if (isLink) {
       resourceClarifiedType = 'modulelink';
@@ -231,6 +247,7 @@ export async function inventoryIMSCCManifest(
       }
     }
 
+    // If a primary content file is identified, parse it to extract title and status
     if (resourceFileHref) {
       const resourceContent = fileContents[resourceFileHref]
 
@@ -313,12 +330,14 @@ export async function inventoryIMSCCManifest(
           }
         }
       }
-      // Finall set the resoruceAnalysisHref
+      // Finally set the resoruceAnalysisHref
       resourceAnalysisHref = analysisHref;
     }
 
+    // If a clarified type was not determined, skip this resource
     if (!resourceClarifiedType) continue;
 
+    // Add the processed resource to the list
     allResources.push({
       identifier: resourceIdentifier,
       title: resourceTitle,
@@ -339,6 +358,14 @@ export async function inventoryIMSCCManifest(
   return allResources;
 }
 
+/**
+ * Inventories and processes the `module_meta.xml` file to extract information about modules and their items.
+ *
+ * @param parser A DOMParser instance for parsing XML content.
+ * @param fileContents An object mapping file paths to their string content from the IMSCC package.
+ * @returns A Promise that resolves to an array of `Module` objects.
+ * @throws If `course_settings/module_meta.xml` is not found.
+ */
 export async function inventoryIMSCCModules(
   parser: PlatformDOMParser,
   fileContents: { [key: string]: string },
@@ -365,12 +392,10 @@ export async function inventoryIMSCCModules(
   metaModuleElements.forEach((metaModuleElement) => {
     const moduleItems: ModuleItem[] = [];
 
-    // const moduleTitle = metaModuleElement.querySelector('title')?.textContent!;
     const moduleTitle =
       metaModuleElement.getElementsByTagName("title").length > 0
         ? metaModuleElement.getElementsByTagName("title")[0].textContent!
         : "ERROR: untitled module";
-    // const moduleStatus = metaModuleElement.querySelector('workflow_state')?.textContent === 'active' ? 'active' : 'unpublished';
     const moduleStatus =
       metaModuleElement.getElementsByTagName("workflow_state").length > 0 &&
         metaModuleElement.getElementsByTagName("workflow_state")[0]
@@ -385,14 +410,12 @@ export async function inventoryIMSCCModules(
     metaModuleItemElements.forEach((metaModuleItemElement) => {
       const moduleItemIdentifier =
         metaModuleItemElement.getAttribute("identifier")!;
-      // const indent = parseInt(metaModuleItemElement.querySelector('indent')?.textContent!, 10);
       const itemIndent = parseInt(
         metaModuleItemElement.getElementsByTagName("indent").length > 0
           ? metaModuleItemElement.getElementsByTagName("indent")[0].textContent!
           : "0",
         10,
       );
-      // const status = metaModuleItemElement.querySelector('workflow_state')?.textContent!;
       const itemStatus =
         metaModuleItemElement.getElementsByTagName("workflow_state").length >
           0 &&
@@ -400,18 +423,15 @@ export async function inventoryIMSCCModules(
             .textContent === "active"
           ? true
           : false;
-      // const contentType = metaModuleItemElement.querySelector('content_type')?.textContent!;
-      const itemContentType =
+     const itemContentType =
         metaModuleItemElement.getElementsByTagName("content_type").length > 0
           ? metaModuleItemElement.getElementsByTagName("content_type")[0]
             .textContent!
           : "ERROR: no content_type";
-      // const title = metaModuleItemElement.querySelector('title')?.textContent!;
       const itemTitle =
         metaModuleItemElement.getElementsByTagName("title").length > 0
           ? metaModuleItemElement.getElementsByTagName("title")[0].textContent!
           : "ERROR: untitled item";
-      // const moduleItemIdentifierRef = metaModuleItemElement.querySelector('identifierref')?.textContent || null;
       const moduleItemIdentifierRef =
         metaModuleItemElement.getElementsByTagName("identifierref").length > 0
           ? metaModuleItemElement.getElementsByTagName("identifierref")[0]
@@ -439,13 +459,19 @@ export async function inventoryIMSCCModules(
       published: moduleStatus,
     };
 
-    // console.log(moduleObj);
     allModules.push(moduleObj);
   });
 
   return allModules;
 }
 
+/**
+ * Reconciles module items with their corresponding resources.
+ * It updates the `clarifiedType` of module items and adds `moduleTitle` to resources.
+ *
+ * @param allModules An array of `Module` objects.
+ * @param allResources An array of `Resource` objects.
+ */
 export function reconcileIMSCCModulesAndResources(
   allModules: Module[],
   allResources: Resource[],
@@ -467,14 +493,24 @@ export function reconcileIMSCCModulesAndResources(
     });
   });
 
+  // TODO: The original code reassigns to allModules and allResources,
+  // but if these are passed as state, this reassignment won't update the state.
+  // It's generally better to return the reconciled arrays or ensure they are mutable references.
+  // For now, keeping the original assignment behavior.
   allModules = reconciledModules;
   allResources = reconciledResources;
 }
 
 
 /**
- * Analyze provided items: extract links/files/videos and run accessibility checks.
- * items - items to analyze (with href and analysisType)
+ * Analyzes the content of each resource to identify embedded links, file attachments, and videos.
+ * It parses the resource's content (HTML or XML) and populates the `links`, `attachments`,
+ * and `videos` arrays within each `Resource` object.
+ *
+ * @param parser A DOMParser instance for parsing XML/HTML content.
+ * @param resources An array of `Resource` objects to analyze.
+ * @param fileContents An object mapping file paths to their string content from the IMSCC package.
+ * @throws If `parser` is null.
  */
 export async function identifyObjectsInIMSCCResources(
   parser: PlatformDOMParser,
@@ -484,19 +520,19 @@ export async function identifyObjectsInIMSCCResources(
   if (parser === null) throw Error("analyzeIMSCCContent: parser is null.");
 
   for (const resource of resources) {
-    if (!resource.analysisHref) continue;
+    if (!resource.analysisHref) continue; // Skip if no content to analyze
 
     const fileContent = fileContents[resource.analysisHref];
-    if (!fileContent) continue;
+    if (!fileContent) continue; // Skip if content file is missing
 
     const allLinks: LinkObject[] = [],
       allAttachments: FileObject[] = [],
       allVideos: VideoObject[] = [];
 
     let richContent: Document;
+    // Parse content based on its analysis type
     if (resource.analysisType === "xml") {
       const xmlDoc = parser.parseFromString(fileContent, "application/xml");
-      // const description = xmlDoc.querySelector("description");
       const description =
         xmlDoc.getElementsByTagName("description").length > 0
           ? xmlDoc.getElementsByTagName("description")[0]
@@ -505,7 +541,6 @@ export async function identifyObjectsInIMSCCResources(
       richContent = parser.parseFromString(htmlContent, "text/html");
     } else if (resource.analysisType === "discussion_xml") {
       const xmlDoc = parser.parseFromString(fileContent, "application/xml");
-      // const text = xmlDoc.querySelector("text");
       const text =
         xmlDoc.getElementsByTagName("text").length > 0
           ? xmlDoc.getElementsByTagName("text")[0]
@@ -513,13 +548,16 @@ export async function identifyObjectsInIMSCCResources(
       const htmlContent = text ? text.textContent : "";
       richContent = parser.parseFromString(htmlContent, "text/html");
     } else {
+      // Default to HTML parsing
       richContent = parser.parseFromString(fileContent, "text/html");
     }
 
+    // Find and collect various objects
     allLinks.push(...findLinks(richContent, resource));
     allAttachments.push(...findFileAttachments(richContent, resource));
     allVideos.push(...findVideos(richContent, resource));
 
+    // Assign collected objects back to the resource
     resource.links = allLinks;
     resource.attachments = allAttachments;
     resource.videos = allVideos;
@@ -527,7 +565,13 @@ export async function identifyObjectsInIMSCCResources(
 }
 
 /**
- * Run axe accessibility checks on items and prepare data for the accessibility tab.
+ * Runs axe-core accessibility checks on the content of each resource and
+ * prepares the results for display in the accessibility tab.
+ *
+ * @param parser A DOMParser instance for parsing XML/HTML content.
+ * @param resources An array of `Resource` objects to check.
+ * @param fileContents An object mapping file paths to their string content from the IMSCC package.
+ * @throws If `parser` is null.
  */
 export async function checkIMSCCResourcesForAccessibility(
   parser: PlatformDOMParser,
@@ -538,17 +582,16 @@ export async function checkIMSCCResourcesForAccessibility(
     throw Error("checkIMSCCResourcesForAccessibility: parser is null.");
 
   for (const resource of resources) {
-    if (!resource.analysisHref) continue;
+    if (!resource.analysisHref) continue; // Skip if no content to analyze
     const content = fileContents[resource.analysisHref];
-    if (!content) continue;
+    if (!content) continue; // Skip if content file is missing
 
     let allResults: EnhancedAxeResults | null = null;
-
     let doc: Document;
 
+    // Parse content based on its analysis type
     if (resource.analysisType === "xml") {
       const xmlDoc = parser.parseFromString(content, "application/xml");
-      // const description = xmlDoc.querySelector("description");
       const description =
         xmlDoc.getElementsByTagName("description").length > 0
           ? xmlDoc.getElementsByTagName("description")[0]
@@ -557,7 +600,6 @@ export async function checkIMSCCResourcesForAccessibility(
       doc = parser.parseFromString(htmlContent, "text/html");
     } else if (resource.analysisType === "discussion_xml") {
       const xmlDoc = parser.parseFromString(content, "application/xml");
-      // const text = xmlDoc.querySelector("text");
       const text =
         xmlDoc.getElementsByTagName("text").length > 0
           ? xmlDoc.getElementsByTagName("text")[0]
@@ -565,21 +607,29 @@ export async function checkIMSCCResourcesForAccessibility(
       const htmlContent = text ? text.textContent : "";
       doc = parser.parseFromString(htmlContent, "text/html");
     } else {
+      // Default to HTML parsing
       doc = parser.parseFromString(content, "text/html");
     }
 
+    // Run axe-core only if the document body has content
     if (doc.body && doc.body.innerHTML.trim() !== "") {
       try {
         if (doc.body.querySelectorAll("*").length > 0) {
           const axeOptions = {
             preload: false,
-            runOnly: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"],
+            runOnly: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"], // Specify accessibility standards
           };
           const results = await axe.run(
-            doc.body.querySelectorAll("*"),
+            doc.body.querySelectorAll("*"), // Scan all elements in the body
             axeOptions,
           );
 
+          /**
+           * Adds metadata to an Axe.Result object, enhancing it for display.
+           * @param type The type of accessibility result (e.g., "violations", "passes").
+           * @param issue The raw Axe.Result object.
+           * @returns An EnhancedAxeResult object with additional context.
+           */
           const addMetadata = (type: string, issue: Axe.Result) =>
             ({
               ...issue,
@@ -597,9 +647,10 @@ export async function checkIMSCCResourcesForAccessibility(
           if (allResults === null)
             allResults = {
               ...results,
-              results: [],
+              results: [] // Initialize the combined results array
             };
 
+          // Map and push results from different categories
           allResults.results.push(
             ...results.violations.map((issue) =>
               addMetadata("violations", issue),
@@ -639,16 +690,21 @@ export async function checkIMSCCResourcesForAccessibility(
     ========================================================================= */
 
 /**
- * Find external links in a document and return structured items.
+ * Finds external and internal links within a given HTML document.
+ * It filters out anchor links, mailto links, and specific Canvas file links.
+ *
+ * @param doc The HTML Document to search for links.
+ * @param item The parent `Resource` object to associate with the links.
+ * @returns An array of `LinkObject`s found in the document.
  */
 function findLinks(doc: Document, item: Resource): LinkObject[] {
   const links: LinkObject[] = [];
   if (!doc) return links;
-  // doc.querySelectorAll('a[href]').forEach(a => {
+
+  // Select all <a> tags with an href attribute and <url> tags with an href attribute (specific to module links)
   const aElements = Array.from(doc.getElementsByTagName("a")).filter((a) =>
     a.hasAttribute("href"),
   );
-  // This is specific to module links
   const urlElements = Array.from(doc.getElementsByTagName("url")).filter((url) =>
     url.hasAttribute('href'),
   );
@@ -656,32 +712,29 @@ function findLinks(doc: Document, item: Resource): LinkObject[] {
   const aAndUrlElements = [...aElements, ...urlElements];
 
   aAndUrlElements.forEach((a) => {
-    const href = (a as HTMLAnchorElement).getAttribute("href");
+    const href = (a as HTMLAnchorElement).getAttribute("href"); // Cast to HTMLAnchorElement for href property
     if (
       href &&
-      !href.startsWith("#") &&
-      !href.startsWith("mailto") &&
-      !a.classList.contains("instructure_file_link") &&
-      !a.classList.contains("instructure_scribd_file")
+      !href.startsWith("#") && // Skip anchor links
+      !href.startsWith("mailto") && // Skip mailto links
+      !a.classList.contains("instructure_file_link") && // Skip Canvas file links
+      !a.classList.contains("instructure_scribd_file") // Skip Canvas Scribd links
     ) {
       let type = "unknown";
       if (href.startsWith("$CANVAS") || href.includes("$WIKI_REFERENCE$")) {
-        type = "course";
+        type = "course"; // Internal Canvas course link
       } else if (
         href.includes(".osu.edu") ||
         href.includes(".ohio-state.edu")
       ) {
-        type = "osu";
+        type = "osu"; // Ohio State University domain link
       } else {
-        type = "external";
+        type = "external"; // External link
       }
       links.push({
         url: href,
-        text: a.textContent.trim(),
+        text: a.textContent?.trim() || '', // Ensure textContent is not null
         parentResourceIdentifier: item.identifier,
-        // parentResourceStatus: item.published,
-        // parentResourceTitle: item.title,
-        // parentResourceType: item.clarifiedType || item.contentType,
         type: type as LinkType,
       });
     }
@@ -690,41 +743,40 @@ function findLinks(doc: Document, item: Resource): LinkObject[] {
 }
 
 /**
- * Find file attachment links in a document.
+ * Finds file attachment links (specifically Canvas-style file links) within a given HTML document.
+ *
+ * @param doc The HTML Document to search for file attachments.
+ * @param item The parent `Resource` object to associate with the attachments.
+ * @returns An array of `FileObject`s found in the document.
  */
 function findFileAttachments(doc: Document, item: Resource): FileObject[] {
   const attachments: FileObject[] = [];
 
   if (!doc) return attachments;
+  // Select <a> tags with specific Canvas file link classes
   const aElements = Array.from(doc.getElementsByTagName("a")).filter(
     (a) =>
       a.classList.contains("instructure_file_link") ||
       a.classList.contains("instructure_scribd_file"),
   );
 
-  // /\.[a-zA-Z0-9]+(?=[\?#]|$)/
+  // /\.[a-zA-Z0-9]+(?=[\?#]|$)/ // Original regex comment
 
-  // doc.querySelectorAll('a.instructure_file_link, a.instructure_scribd_file').forEach(a => {
   aElements.forEach((a) => {
-    let anchorText = a.textContent.trim();
-    if (anchorText === '') anchorText = '(REMEDIATE: Phantom Link)';
+    let anchorText = a.textContent?.trim(); // Ensure textContent is not null
+    if (anchorText === '') anchorText = '(REMEDIATE: Phantom Link)'; // Placeholder for empty link text
     const id = item.identifier;
-    const href = (a as HTMLAnchorElement).href;
+    const href = (a as HTMLAnchorElement).href; // Cast to HTMLAnchorElement for href property
 
+    // Regex to extract file extension from the URL
     const regex = /\.[a-zA-Z0-9]+(?=[\?#]|$)/;
     const extMatch = href.match(regex);
 
-    const ext = extMatch ? extMatch[0] : undefined;
+    const ext = extMatch ? extMatch[0] : undefined; // The matched extension including the dot
 
     attachments.push({
       parentAnchorText: anchorText,
       parentResourceIdentifier: id,
-      /*
-      parentResourceType: item.clarifiedType || item.contentType,
-      parentResourceModuleTitle:
-        item.moduleTitle === undefined ? "(None)" : item.moduleTitle,
-      parentResourceTitle: item.title,
-       */
       href: href,
       extension: ext,
     });
@@ -734,13 +786,23 @@ function findFileAttachments(doc: Document, item: Resource): FileObject[] {
 }
 
 /**
- * Find embedded iframes that correspond to supported video platforms.
+ * Finds embedded video elements (video tags, iframes, or links to video platforms)
+ * within a given HTML document.
+ *
+ * @param doc The HTML Document to search for videos.
+ * @param item The parent `Resource` object to associate with the videos.
+ * @returns An array of `VideoObject`s found in the document.
  */
 function findVideos(doc: Document, item: Resource): VideoObject[] {
   const videos: VideoObject[] = [];
 
   if (!doc) return videos;
 
+  /**
+   * Determines the video platform based on the source URL.
+   * @param src The source URL of the video.
+   * @returns The identified platform name (e.g., 'youtube', 'vimeo', 'instructure') or 'unknown'.
+   */
   function videoPlatform(src: string): string {
     const knownPlatforms = {
       'youtube': ['www.youtube.com/embed/', 'www.youtube.com/watch', 'youtu.be'],
@@ -756,22 +818,25 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
     }
 
     let platform = 'unknown';
+    // Iterate through known platforms and their associated URLs
     Object.entries(knownPlatforms).forEach(knownPlatformObj => {
       const [knownPlatform, urls] = knownPlatformObj
       urls.forEach(url => {
-        if (src.includes(url)) platform = knownPlatform;
-        return;
+        if (src.includes(url)) {
+          platform = knownPlatform;
+        }
       });
     });
 
     return platform;
   }
 
-  // Check for videos
+  // Collect all relevant elements that might contain video content
   const videoElements = Array.from(doc.getElementsByTagName("video"));
   const iFrameElements = Array.from(doc.getElementsByTagName("iframe"));
   const aElements = Array.from(doc.getElementsByTagName("a"));
 
+  // Combine all elements into a single array with their type
   const allNodesToParse: Array<{type: string, element: HTMLVideoElement | HTMLIFrameElement | HTMLAnchorElement}> = []
   videoElements.forEach(element =>
     allNodesToParse.push({type: 'video', element: element})
@@ -794,13 +859,14 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
     let platform = 'unknown';
     let type = 'tbd';
 
+    // Extract relevant data based on element type
     switch (nodeType) {
       case 'video':
         tempTitle = nodeElement.title;
         if (tempTitle !== '') title = tempTitle;
         const source = nodeElement.querySelector("source");
         src = source?.src || "";
-        platform = "Instructure";
+        platform = "Instructure"; // Assuming <video> tags are typically Instructure media
         type = 'embed';
         break;
       case 'iframe':
@@ -821,13 +887,15 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
         break;
     }
 
-    // Get adjacent text
+    // If a known video platform is identified, further analyze for transcript/caption mentions
     if (platform != "unknown") {
+      // Determine the root element for traversing adjacent text
       const traverseRootTag =
         nodeElement.parentElement instanceof HTMLParagraphElement
           ? nodeElement.parentElement
           : nodeElement;
 
+      // Concatenate text from previous and next sibling elements
       const adjacentText = (
         (traverseRootTag.previousElementSibling?.innerHTML || "") +
         " " +
@@ -836,6 +904,7 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
           "")
       ).toLowerCase();
 
+      // Check for keywords indicating transcript or caption availability
       const transcriptOrCaptionMentioned = /transcript|caption/i.test(
         adjacentText,
       );
@@ -844,9 +913,8 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
         title: title,
         platform,
         src: src,
-        type: type,
+        type: type as 'embed' | 'link', // Cast to specific types as per VideoObject definition
         transcriptOrCaptionMentioned: transcriptOrCaptionMentioned,
-        // parentResourceTitle: item.title,
         parentResourceIdentifier: item.identifier,
       });
     }
@@ -855,6 +923,12 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
   return videos;
 }
 
+/**
+ * Converts a raw resource type string into a more human-readable format.
+ *
+ * @param type The raw type string (e.g., "assignment", "contextmodulesubheader").
+ * @returns A human-readable string (e.g., "assignment", "header") or null if the type is unknown.
+ */
 export function getReadableType(type: string | undefined): string | null {
   if (type === undefined) return null;
 
@@ -880,6 +954,13 @@ export function getReadableType(type: string | undefined): string | null {
   }
 }
 
+/**
+ * Finds a `Resource` object in an array by its identifier.
+ *
+ * @param resources An array of `Resource` objects to search within.
+ * @param id The identifier of the resource to find.
+ * @returns The matching `Resource` object or null if no resource with the given ID is found.
+ */
 export function getResourceByIdentifier(
   resources: Resource[],
   id: string,
