@@ -99,7 +99,6 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                                 <Item key="links">Links</Item>
                                 <Item key="attachments">File Attachments</Item>
                                 <Item key="videos">Videos</Item>
-                                <Item key="exports">Export</Item>
                             </TabList>
                             <TabPanels>
                                 <Item key="struct">
@@ -120,11 +119,7 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
                                 <Item key="videos">
                                     <CourseVideosTab resources={allResources} />
                                 </Item>
-                                <Item key="exports">
-                                    {/* TODO: Export functionality
-                                    */}
-                                    Alea jacta est.
-                                </Item>
+
                             </TabPanels>
                         </Tabs>
                     )

@@ -6,11 +6,13 @@ import { useState } from "react";
 import { checkLinks } from "@/app/lib/link-checker";
 */
 
+type Props = {
+  resources: Resource[];
+}
+
 export default function CourseLinksTab({
   resources,
-}: {
-  resources: Resource[];
-}) {
+}: Props) {
   return (
     <>
       <LinksDisplay resources={resources} />
