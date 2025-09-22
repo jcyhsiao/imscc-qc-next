@@ -38,12 +38,16 @@ export interface ModuleItem {
 
 export interface VideoObject {
   title: string;
+  src: string;
   platform: string;
   type: string;
-  src: string;
   transcriptOrCaptionMentioned: boolean;
   // parentResourceTitle: string;
   parentResourceIdentifier: string;
+  parentResourceTitle: string;
+  parentResourceType: string;
+  parentResourceStatus: boolean;
+  parentResourceModuleTitle?: string;
 }
 
 export const EXTENSION_COMMON_NAMES: { [key: string]: string } = {
@@ -67,39 +71,42 @@ export const EXTENSION_COMMON_NAMES: { [key: string]: string } = {
 }
 
 export interface FileObject {
-  href: string;
   parentAnchorText: string;
-  parentResourceIdentifier: string;
+  href: string;
   extension?: string;
-  // parentResourceType: string;
-  // parentResourceModuleTitle: string;
-  // parentResourceTitle: string;
+  parentResourceIdentifier: string;
+  parentResourceTitle: string;
+  parentResourceType: string;
+  parentResourceStatus: boolean;
+  parentResourceModuleTitle?: string;
+
 }
 
 type LINK_TYPES = ["osu", "external", "course", "unknown"];
 export type LinkType = LINK_TYPES[number];
 
 export interface LinkObject {
-  url: string;
   text: string;
-  // parentResourceStatus: boolean;
-  parentResourceIdentifier: string;
-  // parentResourceTitle: string;
-  // parentResourceType: string;
   type: LinkType;
+  url: string;
+  parentResourceIdentifier: string;
+  parentResourceTitle: string;
+  parentResourceType: string;
+  parentResourceStatus: boolean;
+  parentResourceModuleTitle?: string;
 }
 
 type ACCESSIBILITY_RESULT_TYPES = ["violations", "passes", "incomplete"];
 export type AccessibilityResultType = ACCESSIBILITY_RESULT_TYPES[number];
 
-export type EnhancedAxeResult = Axe.Result & {
+export type EnhancedAxeResult = {
   type: string;
   parentResourceIdentifier: string;
-  // parentItemTitle: string;
-  // parentItemType: string;
-  // parentItemPublished: boolean;
-  // parentItemModuleTitle: string;
-};
+  parentResourceTitle: string;
+  parentResourceType: string;
+  parentResourcePublished: boolean;
+  parentItemModuleTitle?: string;
+} & Axe.Result & { nodesHTML: string[] };
 
 export type EnhancedAxeResults = Omit<
   Axe.AxeResults,

@@ -1,11 +1,12 @@
 import { Resource, FileObject, EXTENSION_COMMON_NAMES } from '@/app/lib/definitions';
 import CheckboxGroupBuilder from '@/app/ui/checkbox-group-builder';
-import { Badge, View, Text, Switch, Accordion, Disclosure, DisclosureTitle, DisclosurePanel, Flex } from '@adobe/react-spectrum';
+import { Badge, Button, View, Text, Switch, Accordion, Disclosure, DisclosureTitle, DisclosurePanel, Flex } from '@adobe/react-spectrum';
 import { useState, useMemo } from 'react';
 import ResourceAccordionTitle from '@/app/ui/resource-accordion-title';
+import jsonToCsvExport from 'json-to-csv-export';
 
 export function AttachmentsDisplay({ resources }: { resources: Resource[] }) {
-  const { allResourcesWithFoundAttachmentsSorted, allResourcesWithFoundAttachmentsIDAndType, allFoundAttachmentsResourceTypes, allFoundAttachmentsExtensions, allFoundAttachmentsCountsByResourceType, allFoundAttachmentsCountsByExtension } = useMemo(() => {
+  const { allFoundAttachments, allResourcesWithFoundAttachmentsSorted, allResourcesWithFoundAttachmentsIDAndType, allFoundAttachmentsResourceTypes, allFoundAttachmentsExtensions, allFoundAttachmentsCountsByResourceType, allFoundAttachmentsCountsByExtension } = useMemo(() => {
     const resourcesWithFoundAttachmentsIDAndType: Record<string, string> = {};
 
     const resourcesWithFoundAttachmentsSorted = resources
@@ -39,6 +40,7 @@ export function AttachmentsDisplay({ resources }: { resources: Resource[] }) {
     console.log(foundAttachmentsExtensionsSet);
 
     return {
+      allFoundAttachments: foundAttachments,
       allResourcesWithFoundAttachmentsSorted: resourcesWithFoundAttachmentsSorted,
       allResourcesWithFoundAttachmentsIDAndType: resourcesWithFoundAttachmentsIDAndType,
       allFoundAttachmentsExtensions: foundAttachmentsExtensions,
@@ -83,6 +85,9 @@ export function AttachmentsDisplay({ resources }: { resources: Resource[] }) {
           </Switch>
         </Flex>
       </Flex>
+      <Button variant='accent' onPress={() => jsonToCsvExport({data: allFoundAttachments, filename: 'attachment_inventory.csv'})} >
+        Download Attachment Inventory (CSV)
+      </Button>
       <Accordion>
         {allResourcesWithFoundAttachmentsSorted.map((resource) => {
           const filteredCount = resource.attachments.filter(attachment =>

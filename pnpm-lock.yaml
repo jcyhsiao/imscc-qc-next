@@ -23,6 +23,9 @@ importers:
       glob:
         specifier: ^11.0.3
         version: 11.0.3
+      json-to-csv-export:
+        specifier: ^3.1.2
+        version: 3.1.2
       jszip:
         specifier: ^3.10.1
         version: 3.10.1
@@ -2544,6 +2547,10 @@ packages:
 
   json-stable-stringify-without-jsonify@1.0.1:
     resolution: {integrity: sha512-Bdboy+l7tA3OGW6FjyFHWkP5LuByj1Tk33Ljyq0axyzdk9//JSi2u3fP1QSmd1KNwq6VOKYGlAu87CisVir6Pw==}
+
+  json-to-csv-export@3.1.2:
+    resolution: {integrity: sha512-7YBsJi6Zcho9URT2tv9zlMAikHNtMLUWu3nY2Ca1wysu4GdrllXcu1cJkXOCPZGDOMmVIcjkojoudNk1SOtSNg==}
+    engines: {node: '>=12.17.0'}
 
   json5@1.0.2:
     resolution: {integrity: sha512-g1MWMLBiz8FKi1e4w0UyVL3w+iJceWAFBAaBnnGKOpNa5f8TLktkbre1+s6oICydWAm+HRUGTmI+//xv2hvXYA==}
@@ -6928,6 +6935,8 @@ snapshots:
   json-schema-traverse@0.4.1: {}
 
   json-stable-stringify-without-jsonify@1.0.1: {}
+
+  json-to-csv-export@3.1.2: {}
 
   json5@1.0.2:
     dependencies:

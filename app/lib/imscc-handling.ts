@@ -423,7 +423,7 @@ export async function inventoryIMSCCModules(
             .textContent === "active"
           ? true
           : false;
-     const itemContentType =
+      const itemContentType =
         metaModuleItemElement.getElementsByTagName("content_type").length > 0
           ? metaModuleItemElement.getElementsByTagName("content_type")[0]
             .textContent!
@@ -630,18 +630,22 @@ export async function checkIMSCCResourcesForAccessibility(
            * @param issue The raw Axe.Result object.
            * @returns An EnhancedAxeResult object with additional context.
            */
-          const addMetadata = (type: string, issue: Axe.Result) =>
-            ({
-              ...issue,
+          const addMetadata = (type: string, issue: Axe.Result) => {
+            const nodesHTML = issue.nodes.map((node) => node.html);
+
+            return ({
               type,
               parentResourceIdentifier: resource.identifier,
-              parentItemTitle: resource.title,
-              parentItemType:
+              parentResourceTitle: resource.title,
+              parentResourceType:
                 getReadableType(resource.clarifiedType) ||
                 "ERROR: unknown type",
-              parentItemPublished: resource.published,
-              parentItemModuleTitle: resource.moduleTitle,
+              parentResourcePublished: resource.published,
+              parentResourceModuleTitle: resource.moduleTitle || undefined,
+              ...issue,
+              nodesHTML: nodesHTML,
             }) as EnhancedAxeResult;
+          }
 
           // If allResults hasn't been initialized yet, do so now
           if (allResults === null)
@@ -735,6 +739,11 @@ function findLinks(doc: Document, item: Resource): LinkObject[] {
         url: href,
         text: a.textContent?.trim() || '', // Ensure textContent is not null
         parentResourceIdentifier: item.identifier,
+        parentResourceStatus: item.published,
+        parentResourceTitle: item.title,
+        parentResourceType:
+          getReadableType(item.clarifiedType) || "ERROR: unknown type",
+        parentResourceModuleTitle: item.moduleTitle || undefined,
         type: type as LinkType,
       });
     }
@@ -777,6 +786,11 @@ function findFileAttachments(doc: Document, item: Resource): FileObject[] {
     attachments.push({
       parentAnchorText: anchorText,
       parentResourceIdentifier: id,
+      parentResourceStatus: item.published,
+      parentResourceTitle: item.title,
+      parentResourceType:
+        getReadableType(item.clarifiedType) || "ERROR: unknown type",
+      parentResourceModuleTitle: item.moduleTitle || undefined,
       href: href,
       extension: ext,
     });
@@ -837,15 +851,15 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
   const aElements = Array.from(doc.getElementsByTagName("a"));
 
   // Combine all elements into a single array with their type
-  const allNodesToParse: Array<{type: string, element: HTMLVideoElement | HTMLIFrameElement | HTMLAnchorElement}> = []
+  const allNodesToParse: Array<{ type: string, element: HTMLVideoElement | HTMLIFrameElement | HTMLAnchorElement }> = []
   videoElements.forEach(element =>
-    allNodesToParse.push({type: 'video', element: element})
+    allNodesToParse.push({ type: 'video', element: element })
   );
   iFrameElements.forEach(element =>
-    allNodesToParse.push({type: 'iframe', element: element})
+    allNodesToParse.push({ type: 'iframe', element: element })
   );
   aElements.forEach(element =>
-    allNodesToParse.push({type: 'a', element: element})
+    allNodesToParse.push({ type: 'a', element: element })
   );
 
   allNodesToParse.forEach(node => {
@@ -916,6 +930,11 @@ function findVideos(doc: Document, item: Resource): VideoObject[] {
         type: type as 'embed' | 'link', // Cast to specific types as per VideoObject definition
         transcriptOrCaptionMentioned: transcriptOrCaptionMentioned,
         parentResourceIdentifier: item.identifier,
+        parentResourceStatus: item.published,
+        parentResourceTitle: item.title,
+        parentResourceModuleTitle: item.moduleTitle || undefined,
+        parentResourceType:
+          getReadableType(item.clarifiedType) || "ERROR: unknown type",
       });
     }
   });

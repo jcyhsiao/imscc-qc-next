@@ -5,6 +5,7 @@ import {
 } from "@/app/lib/definitions";
 import {
   Accordion, Disclosure, DisclosureTitle, DisclosurePanel,
+  Button,
   ContextualHelp,
   Heading,
   Content,
@@ -20,13 +21,14 @@ import { QC_BADGES } from "@/app/ui/helpers";
 import CheckboxGroupBuilder from "@/app/ui/checkbox-group-builder";
 import ResourceAccordionTitle from "@/app/ui/resource-accordion-title";
 // import ResourceObjectsAccordionsBuilder from "./resource-objects-accordions-builder";
+import jsonToCsvExport from "json-to-csv-export";
 
 export function AccessibilityResultsDisplay({
   resources,
 }: {
   resources: Resource[];
 }) {
-  const { sortedResources, allResourcesWithResultsIDAndType, allResourcesWithResultsResourceTypes, allResourcesWithResultsResultTypes, allResourceCountsByResourceType, allResultsCountsByResultType, allResourceCountsByResultType } = useMemo(() => {
+  const { sortedResources, allResults, allResourcesWithResultsIDAndType, allResourcesWithResultsResourceTypes, allResourcesWithResultsResultTypes, allResourceCountsByResourceType, allResultsCountsByResultType, allResourceCountsByResultType } = useMemo(() => {
     // NOTE: we are already excluding inapplicable in imscc-handling
     const omittedResourceTypes = ['modulelink'];
 
@@ -47,6 +49,7 @@ export function AccessibilityResultsDisplay({
 
     const results = resources
       .flatMap(result => result.accessibilityResults?.results || [])
+      results.sort((a, b) => a.type.localeCompare(b.type));
     //   const resultsTypes = results.flatMap(result => result.type as AccessibilityResultType);
     const resourcesWithResultsResultsTypesSet = new Set<AccessibilityResultType>();
     const resultsCountsByResultType: Record<string, number> = {};
@@ -70,6 +73,7 @@ export function AccessibilityResultsDisplay({
     });
 
     return {
+      allResults: results,
       sortedResources: resourcesWithResultsSorted,
       allResourcesWithResultsResultTypes: resourcesWithResultsResultsTypesSet,
       allResourcesWithResultsResourceTypes: resourcesWithResultsResourceTypesSet,
@@ -134,6 +138,9 @@ export function AccessibilityResultsDisplay({
         </Switch>
       </Flex>
 
+ <Button variant='accent' onPress={() => jsonToCsvExport({data: allResults, filename: 'automated_axe_accessibility_report.csv'})} >
+        Download Automated Axe Accessibility Report (CSV)
+      </Button>
       <Accordion>
         {sortedResources
           .map((resource) => {
@@ -199,6 +206,9 @@ export const AccessibilityResultDisplay = React.memo(function AccessibilityResul
 }: AccessibilityResultDisplayProps) {
   // Safe access for nodes array to avoid undefined errors
   // const nodeHtml = (axeResult.nodes && axeResult.nodes[0] && axeResult.nodes[0].html) ? axeResult.nodes[0].html.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+
+  // TODO: Reimplement
+  /*
   const nodeHtml = useMemo(() =>
     result.nodes && result.nodes[0] && result.nodes[0].html
       ? result.nodes[0].html
@@ -207,6 +217,7 @@ export const AccessibilityResultDisplay = React.memo(function AccessibilityResul
     result.nodes && result.nodes[0] && result.nodes[0].target
       ? result.nodes[0].target.join(", ")
       : "", [result.nodes]);
+  */
   const impactBadge = useMemo(() => result.impact
     ? QC_BADGES.accessibilityViolationImpact[result.impact]
     : null, [result.impact]);
@@ -229,15 +240,19 @@ export const AccessibilityResultDisplay = React.memo(function AccessibilityResul
           <Text>Description: </Text>
           <Text>{result.description}</Text>
           <br />
-          {nodeHtml !== "" && (
-            <>
-              <Text>Affected Element:</Text>
-              <Well>{nodeHtml}</Well>
-            </>
-          )}
-          <Text>CSS Selector:</Text>
-          <br />
-          <Text>{nodeTargets}</Text>
+              <Text>Affected Elements:</Text>
+              <br />
+              {
+                result.nodesHTML.length > 0
+                ? result.nodesHTML.map((nodeHTML, index) =>
+                  <>
+                  <Text>Element {index + 1}: </Text>
+                  <Well>{nodeHTML}</Well>
+                  </>
+                ) :
+                <Well>(None Listed)</Well>
+              }
+
           <br />
           <Link href={result.helpUrl} target="_blank" rel="noopener noreferrer">
             More Info

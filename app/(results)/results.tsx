@@ -33,9 +33,6 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
     useEffect(() => {
         const performAnalysis = async () => {
             // Only proceed if analysis is requested and a file is selected, and not already complete
-            console.log('isAnalyzing', isAnalyzing);
-            console.log('selectedFile', selectedFile);
-            console.log('isAnalysisComplete', isAnalysisComplete);
 
             if (!isAnalyzing || !selectedFile) {
                 return;

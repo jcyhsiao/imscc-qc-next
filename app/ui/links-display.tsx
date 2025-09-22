@@ -1,6 +1,7 @@
 import { LinkObject, Resource } from "@/app/lib/definitions";
 import {
   Accordion,
+  Button,
   Disclosure,
   DisclosureTitle,
   DisclosurePanel,
@@ -15,6 +16,7 @@ import { QC_BADGES } from "@/app/ui/helpers";
 import { useState, useMemo } from "react";
 import CheckboxGroupBuilder from "@/app/ui/checkbox-group-builder";
 import ResourceAccordionTitle from "@/app/ui/resource-accordion-title";
+import jsonToCsvExport from "json-to-csv-export";
 
 type LinksDisplayProps = {
   resources: Resource[];
@@ -30,7 +32,7 @@ const isOSULibrariesLink = (link: LinkObject): boolean => {
 
 export function LinksDisplay({ resources }: LinksDisplayProps) {
 
-  const { allResourcesWithLinksSorted, allResourcesWithLinksIDAndType, allFoundLinkTypes, allFoundLinksCountsByType, allFoundLinksResourceTypes, allFoundLinksCountsByResourceType } = useMemo(() => {
+  const { allFoundLinks, allResourcesWithLinksSorted, allResourcesWithLinksIDAndType, allFoundLinkTypes, allFoundLinksCountsByType, allFoundLinksResourceTypes, allFoundLinksCountsByResourceType } = useMemo(() => {
     // const resourcesWithLinksIDAndType: Record<string, string> = {};
     const foundLinks: LinkObject[] = [];
     const foundLinksResourceTypes = new Set<string>();
@@ -58,6 +60,7 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
     );
 
     return {
+      allFoundLinks: foundLinks,
       allFoundLinkTypes: foundLinksTypes,
       allFoundLinksCountsByType: foundLinksCountsByType,
       allFoundLinksResourceTypes: foundLinksResourceTypes,
@@ -126,6 +129,9 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
           </Switch>
         </Flex>
       </Flex>
+      <Button variant='accent' onPress={() => jsonToCsvExport({data: allFoundLinks, filename: 'link_inventory.csv'})} >
+        Download Link Inventory (CSV)
+      </Button>
       <Accordion>
         {allResourcesWithLinksSorted.map((resource) => {
 

@@ -1,9 +1,10 @@
 import { Resource, VideoObject } from '@/app/lib/definitions';
-import { Accordion, Link, Badge, Disclosure, DisclosureTitle, DisclosurePanel, Flex, Text, View, Switch } from '@adobe/react-spectrum';
+import { Button, Accordion, Link, Badge, Disclosure, DisclosureTitle, DisclosurePanel, Flex, Text, View, Switch } from '@adobe/react-spectrum';
 import CheckboxGroupBuilder from '@/app/ui/checkbox-group-builder';
 import ResourceAccordionTitle from '@/app/ui/resource-accordion-title'
 import { useState, useMemo } from 'react';
 import { capitalize } from '@/app/ui/helpers';
+import jsonToCsvExport from 'json-to-csv-export';
 
   const videoPlatformLabelOverrides: { [key: string]: string } = {
             youtube: 'YouTube',
@@ -12,7 +13,7 @@ import { capitalize } from '@/app/ui/helpers';
           };
 
 export default function VideosDisplay({ resources }: { resources: Resource[] }) {
-  const { allResourcesWithVideosSorted, allResourcesWithVideosIDAndType, allFoundVideosTypes, allFoundVideosResourceTypes,allFoundVideosPlatforms, allFoundVideosCountsByType, allFoundVideosCountsByResourceType, allFoundVideosCountsByPlatform } = useMemo(() => {
+  const { allFoundVideos, allResourcesWithVideosSorted, allResourcesWithVideosIDAndType, allFoundVideosTypes, allFoundVideosResourceTypes,allFoundVideosPlatforms, allFoundVideosCountsByType, allFoundVideosCountsByResourceType, allFoundVideosCountsByPlatform } = useMemo(() => {
     const resourcesWithVideosSorted = resources.filter(resource => resource.videos.length > 0)
       .sort((a, b) => a.title.localeCompare(b.title));
     const resourcesWithVideosIDAndType: Record<string, string> = {};
@@ -39,6 +40,7 @@ export default function VideosDisplay({ resources }: { resources: Resource[] }) 
     });
 
     return {
+      allFoundVideos: foundVideos,
       allResourcesWithVideosSorted: resourcesWithVideosSorted,
       allResourcesWithVideosIDAndType: resourcesWithVideosIDAndType,
       allFoundVideosTypes: foundVideosTypes,
@@ -109,6 +111,9 @@ export default function VideosDisplay({ resources }: { resources: Resource[] }) 
 
         </Flex>
       </Flex>
+          <Button variant='accent' onPress={() => jsonToCsvExport({data: allFoundVideos, filename: 'video_inventory.csv'})} >
+              Download Video Inventory (CSV)
+            </Button>
       <Accordion>
         {allResourcesWithVideosSorted.map((resource) => {
 
@@ -168,11 +173,17 @@ function VideoDisplay({ video, isHidden }: VideoDisplayProps) {
       <Badge variant='neutral'>{videoPlatformLabelOverrides[video.platform] ||  capitalize(video.platform)}</Badge>&nbsp;
       <Badge variant='neutral'>{capitalize(video.type)}</Badge>&nbsp;
 
+
       <Text>
         {video.title} [
         <Link href={video.src} target='_blank'>{video.src}</Link>
         ]
-      </Text>
+      </Text>&nbsp;
+      {
+        video.transcriptOrCaptionMentioned
+        ? <Badge variant='positive'>Transcript/Captions Download May be Mentioned</Badge>
+        : <Badge variant='yellow'>Transcript/Captions Download Not Mentioned</Badge>
+      }
     </View>
   );
 }
