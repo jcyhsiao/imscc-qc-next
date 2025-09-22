@@ -89,6 +89,7 @@ export interface LinkObject {
   text: string;
   type: LinkType;
   url: string;
+  isOSULibrariesLink: boolean;
   parentResourceIdentifier: string;
   parentResourceTitle: string;
   parentResourceType: string;

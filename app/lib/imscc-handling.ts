@@ -735,9 +735,17 @@ function findLinks(doc: Document, item: Resource): LinkObject[] {
       } else {
         type = "external"; // External link
       }
+
+      const isOSULibrariesLink = (
+      href.includes(".library.osu.edu") ||
+      href.includes(".library.ohio-state.edu") ||
+      href.includes(".proxy.lib.ohio-state.edu")
+    );
+  
       links.push({
         url: href,
         text: a.textContent?.trim() || '', // Ensure textContent is not null
+        isOSULibrariesLink: isOSULibrariesLink,
         parentResourceIdentifier: item.identifier,
         parentResourceStatus: item.published,
         parentResourceTitle: item.title,

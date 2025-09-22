@@ -22,14 +22,6 @@ type LinksDisplayProps = {
   resources: Resource[];
 };
 
-const isOSULibrariesLink = (link: LinkObject): boolean => {
-  return (
-    link.url.includes(".library.osu.edu") ||
-    link.url.includes(".library.ohio-state.edu") ||
-    link.url.includes(".proxy.lib.ohio-state.edu")
-  );
-};
-
 export function LinksDisplay({ resources }: LinksDisplayProps) {
 
   const { allFoundLinks, allResourcesWithLinksSorted, allResourcesWithLinksIDAndType, allFoundLinkTypes, allFoundLinksCountsByType, allFoundLinksResourceTypes, allFoundLinksCountsByResourceType } = useMemo(() => {
@@ -144,7 +136,7 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
             showOSULibrariesLinksOnly
           ) {
             filteredLinksCount -= resource.links.filter(
-              (link) => !isOSULibrariesLink(link),
+              (link) => !link.isOSULibrariesLink,
             ).length;
           }
 
@@ -168,7 +160,7 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
                       !selectedLinkTypes.includes(link.type.toString()) ||
                       (selectedLinkTypes.includes("osu") &&
                         showOSULibrariesLinksOnly &&
-                        !isOSULibrariesLink(link)) ||
+                        !link.isOSULibrariesLink) ||
                       !selectedResourceTypes.includes(
                         allResourcesWithLinksIDAndType[
                         link.parentResourceIdentifier]
