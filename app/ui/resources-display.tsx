@@ -5,12 +5,12 @@ import {
   DisclosureTitle,
   DisclosurePanel,
   Badge,
-  Grid,
+  Divider,
   Flex,
-  View,
   Text,
+  View,
 } from "@adobe/react-spectrum";
-import { capitalize } from "@/app/ui/helpers";
+import { capitalize, getIconForItemType } from "@/app/ui/helpers";
 import { useMemo } from 'react';
 
 export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
@@ -31,53 +31,59 @@ export function ResourcesDisplay({ resources }: { resources: Resource[] }) {
 
   return (
     <>
-      <View>
-        <Text>
-          Note: this does not currently list raw links in modules, including
-          external tools
-        </Text>
-      </View>
+      <p>
+        Note: this does not currently list raw links in modules, including
+        external tools
+      </p>
       <Accordion>
-        {Object.entries(allResourcesByType).map(([type, items]) => (
-          <Disclosure id={type} key={type}>
-            <DisclosureTitle>
-              {type === 'modulelink' ? 'Link in Module' : capitalize(type)} ({items.length})
-            </DisclosureTitle>
-            <DisclosurePanel>
-              <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
-                {items
-                  .map((item) => (
-                    <li key={item.identifier}>
-                      <ResourceItemDisplay resource={item} />
-                    </li>
-                  ))}
-              </ul>
-            </DisclosurePanel>
-          </Disclosure>
-        ))}
+        {Object.entries(allResourcesByType).map(([type, items]) => {
+          const icon = getIconForItemType(type);
+          return (
+            <Disclosure id={type} key={type}>
+              <DisclosureTitle>
+                <Text aria-level={3}>{icon}&nbsp;
+                {type === 'modulelink' ? 'Link in Module' : capitalize(type)} ({items.length})
+              </Text>
+              </DisclosureTitle>
+              <DisclosurePanel>
+                <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
+                  {items
+                    .map((item) => (
+                      <li key={item.identifier}>
+                        <ResourceItemDisplay resource={item} />
+                      </li>
+                    ))}
+                </ul>
+              </DisclosurePanel>
+            </Disclosure>
+          )
+        })}
       </Accordion>
     </>
   );
 }
 
 export function ResourceItemDisplay({ resource }: { resource: Resource }) {
+  if (resource.clarifiedType === 'attachment') {
+    console.log('Attachment');
+    console.log(resource.moduleTitle === undefined);
+  }
+
   return (
-    <View padding={"size-100"}>
-      <Grid columns={["9fr", "3fr"]} gap="size-100">
+    <View padding={"size-100"} borderColor='gray-200' borderBottomWidth='thick'>
+      <Flex direction='row' gap="size-100" wrap>
+        {resource.published ? (
+          <Badge variant="positive">Published</Badge>
+        ) : (
+          <Badge variant="negative">Unpublished</Badge>
+        )}
+        {resource.moduleTitle === undefined ? (
+          <Badge variant="neutral">Not in Module</Badge>
+        ) : (
+          <Badge variant="info">In Module</Badge>
+        )}
         <Text>{resource.title}</Text>
-        <Flex gap="size-100" justifyContent="end">
-          {resource.moduleTitle ? (
-            <Badge variant="neutral">Not in Module</Badge>
-          ) : (
-            <Badge variant="info">In Module</Badge>
-          )}
-          {resource.published ? (
-            <Badge variant="positive">Published</Badge>
-          ) : (
-            <Badge variant="negative">Unpublished</Badge>
-          )}
-        </Flex>
-      </Grid>
+      </Flex>
     </View>
   );
 }

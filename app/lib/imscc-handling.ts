@@ -976,6 +976,8 @@ export function getReadableType(type: string | undefined): string | null {
       return "announcement";
     case "discussion":
       return "discussion";
+    case "attachment":
+      return "attachment";
     default:
       return null;
   }

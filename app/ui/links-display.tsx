@@ -76,12 +76,12 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
   return (
     <>
       <View>
-        <Text>
+        <p>
           Note: currently, this only lists links in rich content, EXCLUDING
           those in quiz questions. Use the Canvas link checker for batch checks.
-        </Text>
+        </p>
       </View>
-      <Flex gap="size-300" wrap>
+      <Flex direction='row' gap="size-100" wrap>
         <CheckboxGroupBuilder
           label="Link Types"
           name="link type"
@@ -103,7 +103,6 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
           onChange={
             newSelectedParentResourceTypes => setSelectedResourceTypes(newSelectedParentResourceTypes)}
         />
-        <Flex>
           <Switch
             isSelected={showFromPublishedResourcesOnly}
             onChange={setShowFromPublishedResourcesOnly}
@@ -119,7 +118,6 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
           >
             Show OSU Libraries Links Only
           </Switch>
-        </Flex>
       </Flex>
       <Button variant='accent' onPress={() => jsonToCsvExport({data: allFoundLinks, filename: 'link_inventory.csv'})} >
         Download Link Inventory (CSV)
@@ -150,7 +148,7 @@ export function LinksDisplay({ resources }: LinksDisplayProps) {
               key={resource.identifier}
               isHidden={isHidden}
             >
-              <DisclosureTitle>
+              <DisclosureTitle aria-level={3}>
                 <ResourceAccordionTitle resource={resource} />
               </DisclosureTitle>
               <DisclosurePanel>
@@ -193,14 +191,18 @@ type LinkDisplayProps = {
 
 function LinkDisplay({ link, isHidden }: LinkDisplayProps) {
   return (
-    <View padding={"size-100"} isHidden={isHidden}>
-      <Text>
-        {QC_BADGES.linkType[link.type]} {link.text} [
+    <View padding={"size-100"} borderColor='gray-200' borderBottomWidth='thick' isHidden={isHidden}>
+      <Flex direction='row' gap="size-100" wrap>
+        {QC_BADGES.linkType[link.type]} 
+
+        <Text>
+          {link.text} <br />[
         <Link href={link.url} target="_blank">
           {link.url}
         </Link>
         ]
       </Text>
+      </Flex>
     </View>
   );
 }

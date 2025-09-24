@@ -6,14 +6,14 @@ import { useState, useMemo } from 'react';
 import { capitalize } from '@/app/ui/helpers';
 import jsonToCsvExport from 'json-to-csv-export';
 
-  const videoPlatformLabelOverrides: { [key: string]: string } = {
-            youtube: 'YouTube',
-            echo360: 'Echo 360',
-            lti: 'External Tool (potentially Mediasite)',
-          };
+const videoPlatformLabelOverrides: { [key: string]: string } = {
+  youtube: 'YouTube',
+  echo360: 'Echo 360',
+  lti: 'External Tool (potentially Mediasite)',
+};
 
 export default function VideosDisplay({ resources }: { resources: Resource[] }) {
-  const { allFoundVideos, allResourcesWithVideosSorted, allResourcesWithVideosIDAndType, allFoundVideosTypes, allFoundVideosResourceTypes,allFoundVideosPlatforms, allFoundVideosCountsByType, allFoundVideosCountsByResourceType, allFoundVideosCountsByPlatform } = useMemo(() => {
+  const { allFoundVideos, allResourcesWithVideosSorted, allResourcesWithVideosIDAndType, allFoundVideosTypes, allFoundVideosResourceTypes, allFoundVideosPlatforms, allFoundVideosCountsByType, allFoundVideosCountsByResourceType, allFoundVideosCountsByPlatform } = useMemo(() => {
     const resourcesWithVideosSorted = resources.filter(resource => resource.videos.length > 0)
       .sort((a, b) => a.title.localeCompare(b.title));
     const resourcesWithVideosIDAndType: Record<string, string> = {};
@@ -61,12 +61,12 @@ export default function VideosDisplay({ resources }: { resources: Resource[] }) 
   return (
     <>
       <View>
-        <Text>
+        <p>
           Note: currently, this only lists links in rich content, EXCLUDING
           those in quiz questions. Use the Canvas link checker for batch checks.
-        </Text>
+        </p>
       </View>
-      <Flex gap="size-300" wrap>
+      <Flex direction='row' gap="size-100" wrap>
         <CheckboxGroupBuilder
           label="Video Type"
           name="video type"
@@ -98,26 +98,23 @@ export default function VideosDisplay({ resources }: { resources: Resource[] }) 
           onChange={
             newSelectedParentResourceTypes => setSelectedResourceTypes(newSelectedParentResourceTypes)}
         />
-        <Flex>
-          <Switch
-            isSelected={showFromPublishedResourcesOnly}
-            onChange={setShowFromPublishedResourcesOnly}
-          >
-            Show Published Items Only
-          </Switch>
-          <Switch isSelected={showFromInModuleResourcesOnly} onChange={setShowFromInModuleResourcesOnly}>
-            Show In-Module Items Only
-          </Switch>
-
-        </Flex>
+        <Switch
+          isSelected={showFromPublishedResourcesOnly}
+          onChange={setShowFromPublishedResourcesOnly}
+        >
+          Show Published Items Only
+        </Switch>
+        <Switch isSelected={showFromInModuleResourcesOnly} onChange={setShowFromInModuleResourcesOnly}>
+          Show In-Module Items Only
+        </Switch>
       </Flex>
-          <Button variant='accent' onPress={() => jsonToCsvExport({data: allFoundVideos, filename: 'video_inventory.csv'})} >
-              Download Video Inventory (CSV)
-            </Button>
+      <Button variant='accent' onPress={() => jsonToCsvExport({ data: allFoundVideos, filename: 'video_inventory.csv' })} >
+        Download Video Inventory (CSV)
+      </Button>
       <Accordion>
         {allResourcesWithVideosSorted.map((resource) => {
 
-          const filteredVideosCount = resource.videos.filter(video => selectedVideoTypes.includes(video.type) && selectedVideoPlatforms.includes(video.platform) ).length;;
+          const filteredVideosCount = resource.videos.filter(video => selectedVideoTypes.includes(video.type) && selectedVideoPlatforms.includes(video.platform)).length;;
 
           const isHidden = filteredVideosCount === 0 ||
             !(selectedResourceTypes.includes(resource.clarifiedType || 'tbd')) ||
@@ -129,7 +126,7 @@ export default function VideosDisplay({ resources }: { resources: Resource[] }) 
               key={resource.identifier}
               isHidden={isHidden}
             >
-              <DisclosureTitle>
+              <DisclosureTitle aria-level={3}>
                 <ResourceAccordionTitle resource={resource} />
               </DisclosureTitle>
               <DisclosurePanel>
@@ -169,21 +166,23 @@ type VideoDisplayProps = {
 
 function VideoDisplay({ video, isHidden }: VideoDisplayProps) {
   return (
-    <View padding={"size-100"} isHidden={isHidden}>
-      <Badge variant='neutral'>{videoPlatformLabelOverrides[video.platform] ||  capitalize(video.platform)}</Badge>&nbsp;
-      <Badge variant='neutral'>{capitalize(video.type)}</Badge>&nbsp;
+    <View padding={"size-100"} borderColor='gray-200' borderBottomWidth='thick' isHidden={isHidden}>
+      <Flex direction='row' gap="size-100" wrap>
+        <Badge variant='neutral'>{videoPlatformLabelOverrides[video.platform] || capitalize(video.platform)}</Badge>
+        <Badge variant='neutral'>{capitalize(video.type)}</Badge>
+{
+          video.transcriptOrCaptionMentioned
+            ? <Badge variant='positive'>Transcript/Captions Download May be Mentioned</Badge>
+            : <Badge variant='yellow'>Transcript/Captions Download Not Mentioned</Badge>
+        }
 
-
-      <Text>
-        {video.title} [
-        <Link href={video.src} target='_blank'>{video.src}</Link>
-        ]
-      </Text>&nbsp;
-      {
-        video.transcriptOrCaptionMentioned
-        ? <Badge variant='positive'>Transcript/Captions Download May be Mentioned</Badge>
-        : <Badge variant='yellow'>Transcript/Captions Download Not Mentioned</Badge>
-      }
+        <Text>
+          {video.title} <br />[
+          <Link href={video.src} target='_blank'>{video.src}</Link>
+          ]
+        </Text>
+        
+      </Flex>
     </View>
   );
 }

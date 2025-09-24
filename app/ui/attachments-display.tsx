@@ -57,8 +57,8 @@ export function AttachmentsDisplay({ resources }: { resources: Resource[] }) {
 
   return (
     <>
-      <Text>Notes: Some regular links repurposed from previously attachment links may show up here as well. To ensure document accessibility, use the Ally tool in CarmenCanvas.</Text>
-      <Flex gap='size-300'>
+      <p>Notes: Some regular links repurposed from previously attachment links may show up here as well. To ensure document accessibility, use the Ally tool in CarmenCanvas.</p>
+      <Flex direction='row' gap="size-100" wrap>
         <CheckboxGroupBuilder
           label='File Type'
           name='file type'
@@ -76,14 +76,12 @@ export function AttachmentsDisplay({ resources }: { resources: Resource[] }) {
           selectedValues={selectedResourceTypes}
           onChange={(newSelectedValues) => setSelectedResourceTypes(newSelectedValues)}
         />
-        <Flex>
           <Switch isSelected={showFromPublishedResourcesOnly} onChange={setShowFromPublishedResourcesOnly}>
             Show Published Items Only
           </Switch>
           <Switch isSelected={showFromInModuleResourcesOnly} onChange={setShowFromInModuleResourcesOnly}>
             Show Items in Modules Only
           </Switch>
-        </Flex>
       </Flex>
       <Button variant='accent' onPress={() => jsonToCsvExport({data: allFoundAttachments, filename: 'attachment_inventory.csv'})} >
         Download Attachment Inventory (CSV)
@@ -105,7 +103,7 @@ export function AttachmentsDisplay({ resources }: { resources: Resource[] }) {
               key={resource.identifier}
               isHidden={isHidden}
             >
-              <DisclosureTitle>
+              <DisclosureTitle aria-level={3}>
                 <ResourceAccordionTitle resource={resource} />
               </DisclosureTitle>
               <DisclosurePanel>
@@ -144,13 +142,16 @@ type AttachmentDisplayProps = {
 
 function AttachmentDisplay({ attachment, isHidden }: AttachmentDisplayProps) {
   return (
-    <View padding={"size-100"} isHidden={isHidden}>
-      <Badge variant='neutral'>{attachment.extension ? EXTENSION_COMMON_NAMES[attachment.extension] : attachment.extension?.toUpperCase()}</Badge>&nbsp;
+    <View padding={"size-100"} borderColor='gray-200' borderBottomWidth='thick' isHidden={isHidden}>
+      <Flex direction='row' gap="size-100" wrap>
+        <Badge variant='neutral'>{attachment.extension ? EXTENSION_COMMON_NAMES[attachment.extension] : attachment.extension?.toUpperCase()}</Badge>&nbsp;
       <Text>
-        {attachment.parentAnchorText} [
+        {attachment.parentAnchorText} <br />[
+          {/* TODO: just get the filename */}
           {attachment.href}
         ]
       </Text>
+        </Flex>
     </View>
   );
 }

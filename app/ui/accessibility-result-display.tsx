@@ -49,7 +49,7 @@ export function AccessibilityResultsDisplay({
 
     const results = resources
       .flatMap(result => result.accessibilityResults?.results || [])
-      results.sort((a, b) => a.type.localeCompare(b.type));
+    results.sort((a, b) => a.type.localeCompare(b.type));
     //   const resultsTypes = results.flatMap(result => result.type as AccessibilityResultType);
     const resourcesWithResultsResultsTypesSet = new Set<AccessibilityResultType>();
     const resultsCountsByResultType: Record<string, number> = {};
@@ -98,9 +98,9 @@ export function AccessibilityResultsDisplay({
 
   return (
     <>
-      <Text>Note: This does not currently check the syllabus page.</Text>
+      <p>Note: This does not currently check the syllabus page.</p>
 
-      <Flex gap="size-300">
+      <Flex direction='row' gap="size-100" wrap>
         <CheckboxGroupBuilder
           label="Result Types"
           name="result types"
@@ -138,7 +138,7 @@ export function AccessibilityResultsDisplay({
         </Switch>
       </Flex>
 
- <Button variant='accent' onPress={() => jsonToCsvExport({data: allResults, filename: 'automated_axe_accessibility_report.csv'})} >
+      <Button variant='accent' onPress={() => jsonToCsvExport({ data: allResults, filename: 'automated_axe_accessibility_report.csv' })} >
         Download Automated Axe Accessibility Report (CSV)
       </Button>
       <Accordion>
@@ -159,7 +159,7 @@ export function AccessibilityResultsDisplay({
                 key={resource.identifier}
                 isHidden={isHidden}
               >
-                <DisclosureTitle>
+                <DisclosureTitle aria-level={3}>
                   <ResourceAccordionTitle resource={resource} />
                 </DisclosureTitle>
                 <DisclosurePanel>
@@ -173,15 +173,15 @@ export function AccessibilityResultsDisplay({
                           selectedResourceTypes.includes(allResourcesWithResultsIDAndType[result.parentResourceIdentifier]));
 
                       return (
-                        <li key={`${resource.identifier}-${index}`} id={`${resource.identifier}-${index}`} hidden={isHidden}>
+                        <li key={`${resource.identifier}-li-${index}`} id={`${resource.identifier}-li-${index}`} hidden={isHidden}>
                           <AccessibilityResultDisplay
+                            key={`${resource.identifier}-result-${index}`}
                             type={result.type}
                             result={result}
                           />
                         </li>
                       )
                     })}
-
                   </ul>
                 </DisclosurePanel>
               </Disclosure>
@@ -226,39 +226,40 @@ export const AccessibilityResultDisplay = React.memo(function AccessibilityResul
     : null, [result.type]);
 
   return (
-    <View padding="size-100">
-      {typeBadge}
-      {impactBadge}
-      {result.help}
+    <View padding="size-100" borderColor='gray-200' borderBottomWidth='thick'>
+      <Flex direction='row' gap={"size-100"} wrap>
+        {typeBadge}
+        {impactBadge}
+        {result.help}
 
-      <ContextualHelp
-        variant="info"
-        aria-label={`More information about ${result.impact ?? ""} ${type}: ${result.help}`}
-      >
-        <Heading>More Information</Heading>
-        <Content>
-          <Text>Description: </Text>
-          <Text>{result.description}</Text>
-          <br />
-              <Text>Affected Elements:</Text>
-              <br />
-              {
-                result.nodesHTML.length > 0
+        <ContextualHelp
+          variant="info"
+          aria-label={`More information about ${result.impact ?? ""} ${type}: ${result.help}`}
+        >
+          <Heading level={4}>More Information</Heading>
+          <Content>
+            <p>Description: </p>
+            <p>{result.description}</p>
+            <p>Affected Elements:</p>
+            <br />
+            {
+              result.nodesHTML.length > 0
                 ? result.nodesHTML.map((nodeHTML, index) =>
                   <>
-                  <Text>Element {index + 1}: </Text>
-                  <Well>{nodeHTML}</Well>
+                    <p>Element {index + 1}: </p>
+                    <Well>{nodeHTML}</Well>
                   </>
                 ) :
                 <Well>(None Listed)</Well>
-              }
+            }
 
-          <br />
-          <Link href={result.helpUrl} target="_blank" rel="noopener noreferrer">
-            More Info
-          </Link>
-        </Content>
-      </ContextualHelp>
+            <br />
+            <Link href={result.helpUrl} target="_blank" rel="noopener noreferrer">
+              More Info
+            </Link>
+          </Content>
+        </ContextualHelp>
+      </Flex>
     </View>
   );
 });

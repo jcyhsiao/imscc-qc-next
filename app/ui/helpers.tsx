@@ -6,6 +6,7 @@ import {
   BookA,
   BookCheck,
   NotebookText,
+  Paperclip,
   Link as LRLink,
   MessageCircleQuestionMark,
   Megaphone,
@@ -72,31 +73,34 @@ export function getIconForItemType(type: string): JSX.Element {
 
   switch (type) {
     case "contextmodulesubheader":
-      icon = <Heading aria-label={ariaLabel} {...sharedProps} />;
+      icon = <Heading {...sharedProps} />;
       break;
     case "assignment":
-      icon = <BookA aria-label={ariaLabel} {...sharedProps} />;
+      icon = <BookA {...sharedProps} />;
       break;
     case "page":
-      icon = <NotebookText aria-label={ariaLabel} {...sharedProps} />;
+      icon = <NotebookText {...sharedProps} />;
       break;
     case "externalurl":
-      icon = <LRLink aria-label={ariaLabel} {...sharedProps} />;
+      icon = <LRLink {...sharedProps} />;
       break;
     case "survey":
-      icon = <MessageCircleQuestionMark aria-label={ariaLabel} {...sharedProps} />;
+      icon = <MessageCircleQuestionMark {...sharedProps} />;
       break;
     case "quiz":
-      icon = <BookCheck aria-label={ariaLabel} {...sharedProps} />;
+      icon = <BookCheck {...sharedProps} />;
       break;
     case "announcement":
-      icon = <Megaphone aria-label={ariaLabel} {...sharedProps} />;
+      icon = <Megaphone {...sharedProps} />;
       break;
     case "discussion":
-      icon = <MessagesSquare aria-label={ariaLabel} {...sharedProps} />;
+      icon = <MessagesSquare {...sharedProps} />;
+      break;
+    case "attachment":
+      icon = <Paperclip {...sharedProps} />;
       break;
     default:
-      icon = <FileQuestionMark aria-label={ariaLabel} {...sharedProps} />;
+      icon = <FileQuestionMark {...sharedProps} />;
   }
 
   return icon;

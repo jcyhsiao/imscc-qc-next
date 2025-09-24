@@ -1,4 +1,4 @@
-import { View, Heading, ProgressCircle, Text, Item, TabList, TabPanels, Tabs } from '@adobe/react-spectrum';
+import { View, Heading, ProgressCircle, Item, TabList, TabPanels, Tabs } from '@adobe/react-spectrum';
 import { useEffect, useState } from 'react';
 import Alert from '@spectrum-icons/workflow/Alert';
 
@@ -13,7 +13,7 @@ import CourseAttachmentsTab from '@/app/(results)/course-attachments';
 import CourseVideosTab from '@/app/(results)/course-videos';
 
 type Props = {
-    selectedFile?: File | null;
+    selectedFile: File | null;
     isAnalyzing: boolean;
     setIsAnalyzing: (value: boolean) => void;
 }
@@ -75,8 +75,8 @@ export default function Results({ selectedFile, isAnalyzing, setIsAnalyzing }: P
             <Heading level={2}>Results</Heading>
             {
                 selectedFile
-                    ? <Text>Selected document: {selectedFile.name}</Text>
-                    : <Text>(No file selected)</Text>
+                    ? <p>Selected document: {selectedFile.name}</p>
+                    : <p>(No file selected)</p>
             }
             {
                 isAnalyzing

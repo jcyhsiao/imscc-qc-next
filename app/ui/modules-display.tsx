@@ -9,6 +9,7 @@ import {
   DisclosureTitle,
   DisclosurePanel,
   Flex,
+  Heading,
   View,
 } from "@adobe/react-spectrum";
 
@@ -19,7 +20,7 @@ export function ModulesDisplay({ modules }: { modules: Module[] }) {
         <Disclosure id={module.title} key={module.identifier}>
           <DisclosureTitle>
             <Grid columns={["11fr", "1fr"]} width="90vw">
-              <Text>{module.title}</Text>
+              <Text aria-level={3}>{module.title}</Text>
               {module.published
                 ? QC_BADGES.publishStatus.published
                 : QC_BADGES.publishStatus.unpublished}
@@ -64,15 +65,15 @@ export function ModuleItemDisplay({ item }: { item: ModuleItem }) {
   const itemIcon = getIconForItemType(itemClarifiedType.toLowerCase());
 
   return (
-    <View padding={"size-100"} paddingStart={`${indentLevel * 1.5}rem`}>
-      <Grid columns={["1fr", "9fr", "2fr"]} gap="size-100">
+    <View padding={"size-100"} paddingStart={`${indentLevel * 1.5}rem`} borderColor='gray-200' borderBottomWidth='thick'>
+      <Flex direction='row' gap="size-100" wrap>
         {itemIcon}
-        <Text>{item.title}</Text>
-        <Flex gap="size-100" justifyContent="end">
+        {itemStatusIndicator}
           <Badge variant="neutral">{capitalize(itemReadableType!)}</Badge>
-          {itemStatusIndicator}
-        </Flex>
-      </Grid>
+          
+        <Text>{item.title}</Text>
+        
+      </Flex>
     </View>
   );
 }
