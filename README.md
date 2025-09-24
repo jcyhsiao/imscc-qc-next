@@ -1,3 +1,21 @@
+
+# Canvas Course QA Tool
+
+This web application allows users to upload an IMSCC 1.1 (Canvas course export) archive and automatically performs a series of quality checks on the course content. It is designed to help instructional designers, accessibility specialists, and educators review Canvas courses for common issues before import or publication.
+
+
+## What does this app do?
+
+- **Upload IMSCC Files:** Users can upload a Canvas course export file (`.imscc` or `.zip`).
+- **Course Structure Analysis:** The app inventories modules, pages, assignments, quizzes, discussions, and other resources in the course.
+- **Resource Extraction:** It identifies and lists links, file attachments, and embedded videos within course content.
+- **Accessibility Checking:** The app runs automated accessibility checks (using axe-core) on course pages and resources, reporting violations, passes, and items to review.
+- **Results Dashboard:** Results are displayed in organized tabs, including course structure, resources, links, attachments, videos, and accessibility findings.
+- **Exportable CSV Reports:** Users can export the results of quality checks and accessibility findings as CSV files for further analysis or record-keeping.
+- **Quick Review:** Users can quickly see which resources may need attention for accessibility or content issues before importing into Canvas.
+
+---
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
