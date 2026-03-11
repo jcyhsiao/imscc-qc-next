@@ -1,0 +1,27 @@
+{
+  "metadata": {
+    "generatedAt": "2026-03-11T13:43:27.761239",
+    "analyzerVersion": "1.0.0",
+    "resourceCount": 1,
+    "linkCount": 0,
+    "attachmentCount": 0
+  },
+  "resources": [
+    {
+      "title": "Untitled",
+      "moduleTitle": null,
+      "identifier": "ASSIGNMENT1",
+      "identifierref": null,
+      "href": "test_assignment.html",
+      "published": false,
+      "clarifiedType": "assignment",
+      "contentType": "associatedcontent/imscc_xmlv1p1/learning-application-resource",
+      "analysisHref": "test_assignment.html",
+      "analysisType": "xml",
+      "links": [],
+      "attachments": []
+    }
+  ],
+  "links": [],
+  "attachments": []
+}
