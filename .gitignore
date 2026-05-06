@@ -12,7 +12,6 @@
 
 # testing
 /coverage
-/flutter_imscc_link_analyzer/test_data
 
 # next.js
 /.next/
